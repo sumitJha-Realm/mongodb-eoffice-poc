@@ -1,0 +1,97 @@
+# Admin SCRAM user for the eoffice-rs deployment (applied by one-shot.sh).
+apiVersion: v1
+kind: Secret
+metadata:
+  name: eoffice-admin-password
+  namespace: mongodb
+type: Opaque
+stringData:
+  password: "eoffice123"
+---
+apiVersion: mongodb.com/v1
+kind: MongoDBUser
+metadata:
+  name: eoffice-admin
+  namespace: mongodb
+spec:
+  username: admin
+  db: admin
+  passwordSecretKeyRef:
+    name: eoffice-admin-password
+    key: password
+  mongodbResourceRef:
+    name: eoffice-rs
+  roles:
+    - db: admin
+      name: root
+---
+# mongot syncs from the replica set as this user; MCK expects the secret name
+# to be <MongoDBSearch name>-<username>-password.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: eoffice-rs-search-search-sync-source-password
+  namespace: mongodb
+type: Opaque
+stringData:
+  password: "searchsync123"
+---
+apiVersion: mongodb.com/v1
+kind: MongoDBUser
+metadata:
+  name: eoffice-rs-search-sync-source
+  namespace: mongodb
+spec:
+  username: search-sync-source
+  db: admin
+  passwordSecretKeyRef:
+    name: eoffice-rs-search-search-sync-source-password
+    key: password
+  mongodbResourceRef:
+    name: eoffice-rs
+  roles:
+    - db: admin
+      name: searchCoordinator
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: eoffice-backup-store-password
+  namespace: mongodb
+type: Opaque
+stringData:
+  password: "eoffice123"
+---
+apiVersion: mongodb.com/v1
+kind: MongoDBUser
+metadata:
+  name: eoffice-backup-blockstore-user
+  namespace: mongodb
+spec:
+  username: backup-blockstore
+  db: admin
+  passwordSecretKeyRef:
+    name: eoffice-backup-store-password
+    key: password
+  mongodbResourceRef:
+    name: eoffice-rs
+  roles:
+    - db: admin
+      name: root
+---
+apiVersion: mongodb.com/v1
+kind: MongoDBUser
+metadata:
+  name: eoffice-backup-oplog-user
+  namespace: mongodb
+spec:
+  username: backup-oplog
+  db: admin
+  passwordSecretKeyRef:
+    name: eoffice-backup-store-password
+    key: password
+  mongodbResourceRef:
+    name: eoffice-rs
+  roles:
+    - db: admin
+      name: root

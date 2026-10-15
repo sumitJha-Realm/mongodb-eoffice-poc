@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>eOffice 2.0 — UDAAN</title>
+<style>
+  :root {
+    --navy:#12294b; --navy2:#1b3a66; --accent:#e8963a; --bg:#eef1f5; --card:#ffffff;
+    --border:#dde3ea; --fg:#1d2733; --dim:#64748b; --green:#1a7f37; --red:#c5281c; --amber:#b45309; --blue:#1d5fbf;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--fg); font-size:14px; }
+
+  /* Header */
+  header { background:var(--navy); color:#fff; display:flex; align-items:center; padding:0 20px; height:54px; position:sticky; top:0; z-index:10; box-shadow:0 1px 4px rgba(0,0,0,.25); }
+  .logo { width:34px; height:34px; border-radius:50%; background:var(--accent); color:var(--navy); font-weight:800; display:flex; align-items:center; justify-content:center; margin-right:12px; }
+  .title b { font-size:15px; } .title span { display:block; font-size:11px; color:#aebfd6; }
+  .hspace { flex:1; }
+  .pill { font-size:12px; padding:4px 12px; border-radius:14px; background:var(--navy2); margin-left:10px; }
+  a.pill { color:#cfe3ff; text-decoration:none; }
+  a.pill:hover { background:#1d3a63; color:#fff; }
+  .pill.ok { color:#7ee2a0; } .pill.bad { color:#ff9d94; }
+  .user { width:32px; height:32px; border-radius:50%; background:var(--navy2); display:flex; align-items:center; justify-content:center; margin-left:14px; font-size:12px; }
+
+  /* Layout */
+  .layout { display:flex; min-height:calc(100vh - 54px); }
+  nav { width:210px; background:#fff; border-right:1px solid var(--border); padding:14px 0; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:10px 18px; cursor:pointer; color:var(--dim); border-left:3px solid transparent; }
+  .nav-item:hover { background:#f5f8fb; }
+  .nav-item.active { color:var(--navy); border-left-color:var(--accent); background:#f1f6fc; font-weight:600; }
+  .nav-ic { width:22px; height:22px; border-radius:5px; font-size:10px; font-weight:700; color:#fff; display:flex; align-items:center; justify-content:center; }
+  main { flex:1; padding:22px 26px; max-width:1300px; }
+  .page { display:none; } .page.active { display:block; }
+  h1 { font-size:18px; margin:0 0 2px; } .crumb { color:var(--dim); font-size:12px; margin-bottom:18px; }
+
+  /* Cards */
+  .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px; margin-bottom:20px; }
+  .stat { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; }
+  .stat .k { font-size:26px; font-weight:700; } .stat .l { color:var(--dim); font-size:12px; margin-top:2px; }
+  .panel { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:18px; margin-bottom:18px; }
+  .panel h2 { font-size:14px; margin:0 0 3px; } .panel .ref { font-size:11px; color:var(--dim); margin-bottom:12px; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+
+  button { background:var(--navy); color:#fff; border:0; border-radius:6px; padding:8px 16px; font-size:13px; cursor:pointer; }
+  button:hover { background:var(--navy2); } button:disabled { opacity:.5; }
+  button.ghost { background:#fff; color:var(--navy); border:1px solid var(--border); }
+  button.warn { background:var(--red); }
+  button.go { background:var(--green); }
+  input, select { border:1px solid var(--border); border-radius:6px; padding:7px 10px; font-size:13px; background:#fff; width:110px; }
+  input.wide { width:260px; }
+
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; color:var(--dim); font-weight:600; font-size:12px; padding:8px 10px; border-bottom:2px solid var(--border); }
+  td { padding:9px 10px; border-bottom:1px solid var(--border); }
+  tr:hover td { background:#f7fafc; }
+  .chip { font-size:11px; padding:2px 10px; border-radius:10px; font-weight:600; }
+  .chip.OPEN { background:#e7f3ec; color:var(--green); } .chip.PENDING { background:#fdf3e3; color:var(--amber); }
+  .chip.CLOSED { background:#eceff3; color:var(--dim); }
+  .chip.URGENT, .chip.TOP { background:#fdeceb; color:var(--red); } .chip.NORMAL { background:#e9f0fb; color:var(--blue); }
+  .chip.DC1 { background:#e7f3ec; color:var(--green); } .chip.DC2 { background:#fdf3e3; color:var(--amber); }
+  .chip.DR { background:#fdeceb; color:var(--red); } .chip.atlas { background:#e9f0fb; color:var(--blue); }
+  .st-PRIMARY { color:var(--green); font-weight:700; } .st-SECONDARY { color:var(--blue); } .st-DOWN { color:var(--red); font-weight:700; }
+  .st-TERMINATING, .st-STARTING, .st-STARTUP2, .st-RECOVERING, .st-UNKNOWN { color:var(--amber); font-weight:700; }
+
+  /* info buttons + modal */
+  .i { display:inline-flex; align-items:center; justify-content:center; width:17px; height:17px; border-radius:50%; background:var(--blue); color:#fff; font:700 11px Georgia,serif; cursor:pointer; margin-left:6px; vertical-align:middle; }
+  .i:hover { background:var(--accent); }
+  #infoBg { display:none; position:fixed; inset:0; background:rgba(10,20,40,.55); z-index:50; align-items:center; justify-content:center; }
+  #infoBox { background:#fff; border-radius:12px; max-width:860px; width:92%; max-height:86vh; overflow:auto; padding:22px 26px; box-shadow:0 12px 40px rgba(0,0,0,.35); }
+  #infoBox h3 { margin:0 0 8px; color:var(--navy); } #infoBox h4 { margin:16px 0 4px; color:var(--navy2); font-size:13px; }
+  #infoBox p, #infoBox li { line-height:1.5; } #infoBox code, .doc code { background:#eef2f7; padding:1px 5px; border-radius:4px; font-size:12px; }
+  #infoBox pre, .doc pre { max-height:none; }
+
+  /* diagrams */
+  .arch { display:grid; gap:10px; }
+  .tier { border:2px solid var(--border); border-radius:10px; padding:10px 12px; background:#fafcff; }
+  .tier > b { display:block; font-size:12px; color:var(--navy2); margin-bottom:6px; }
+  .boxes { display:flex; flex-wrap:wrap; gap:8px; }
+  .bx { flex:1; min-width:130px; border-radius:8px; padding:8px 10px; font-size:12px; color:#fff; text-align:center; }
+  .bx small { display:block; opacity:.85; font-size:10.5px; margin-top:2px; }
+  .b-navy { background:var(--navy2); } .b-green { background:#1a7f37; } .b-amber { background:#b45309; } .b-red { background:#c5281c; }
+  .b-blue { background:#1d5fbf; } .b-purple { background:#6d28d9; } .b-teal { background:#0e7490; } .b-grey { background:#64748b; }
+  .arrow { text-align:center; color:var(--dim); font-size:12px; }
+  .doc p, .doc li { line-height:1.55; } .doc ul { margin:6px 0 6px 18px; padding:0; }
+  .tabs { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+  .tabs button { background:#fff; color:var(--navy); border:1px solid var(--border); } .tabs button.on { background:var(--navy); color:#fff; }
+  .hit { padding:8px 10px; border-bottom:1px solid var(--border); } .hit b { color:var(--navy); } .hit .mini { display:block; }
+  .metrics { display:flex; gap:10px; flex-wrap:wrap; margin:10px 0; } .metrics .m { background:#f1f6fc; border:1px solid var(--border); border-radius:8px; padding:6px 12px; font-size:12px; } .metrics .m b { font-size:16px; display:block; color:var(--navy); }
+  .ex { background:#fff7ec; border:1px solid #f1d4a8; color:#7a4a08; border-radius:14px; padding:4px 12px; font-size:12px; cursor:pointer; } .ex:hover { background:#ffe9c9; }
+  .query-guide { margin:10px 0 14px; padding:10px 0; border-block:1px solid var(--border); }
+  .query-guide summary { color:var(--navy); cursor:pointer; font-size:12px; font-weight:600; }
+  .query-guide .two { margin-top:10px; gap:8px 24px; }
+  .query-guide p { margin:3px 0 0; }
+  .cipher { font-family:ui-monospace,Menlo,monospace; font-size:11px; background:#2a1233; color:#f5a6ff; padding:2px 6px; border-radius:4px; word-break:break-all; }
+  .plain { font-family:ui-monospace,Menlo,monospace; font-size:12px; background:#e7f3ec; color:#14532d; padding:2px 6px; border-radius:4px; }
+
+  pre { background:#0f1b2d; color:#d7e3f4; border-radius:8px; padding:12px; font-size:11.5px; max-height:300px; overflow:auto; white-space:pre-wrap; margin:12px 0 0; }
+  .kpi-pass { color:var(--green); font-weight:700; } .kpi-fail { color:var(--red); font-weight:700; }
+  .mini { font-size:11px; color:var(--dim); }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:1000px){ .two { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">eO</div>
+  <div class="title"><b>eOffice 2.0</b><span>UDAAN · Indian Air Force · Office Management Suite (PoC)</span></div>
+  <div class="hspace"></div>
+  <a class="pill" href="/kubernetes.html" title="Open the Kubernetes topology view">Kubernetes view</a>
+  <a class="pill" id="omLink" target="_blank" rel="noopener" style="display:none" title="Open MongoDB Ops Manager">Ops Manager</a>
+  <div class="pill" id="clusterPill">cluster: …</div>
+  <div class="pill" id="modePill">local</div>
+  <div class="user">SJ</div>
+</header>
+
+<div class="layout">
+<nav id="nav">
+  <div class="nav-item active" data-page="dash"><span class="nav-ic" style="background:#1d5fbf">D</span>Dashboard</div>
+  <div class="nav-item" data-page="files"><span class="nav-ic" style="background:#1a7f37">F</span>File Registry</div>
+  <a class="nav-item" href="/workflow.html" style="text-decoration:none"><span class="nav-ic" style="background:#0e7490">W</span>Approval Workbench</a>
+  <div class="nav-item" data-page="search"><span class="nav-ic" style="background:#b45309">S</span>Smart Search</div>
+  <div class="nav-item" data-page="audit"><span class="nav-ic" style="background:#6d28d9">A</span>Audit &amp; Security</div>
+  <div class="nav-item" data-page="kms"><span class="nav-ic" style="background:#9d174d">K</span>KMS &amp; Encryption</div>
+  <div class="nav-item" data-page="resil"><span class="nav-ic" style="background:#c5281c">R</span>Resilience (HA/DR)</div>
+  <div class="nav-item" data-page="perf"><span class="nav-ic" style="background:#0e7490">P</span>Performance Lab</div>
+  <div class="nav-item" data-page="arch"><span class="nav-ic" style="background:#334155">&#9881;</span>Architecture</div>
+</nav>
+
+<main>
+
+<!-- ============ DASHBOARD ============ -->
+<div class="page active" id="page-dash">
+  <h1>Executive Dashboard</h1>
+  <div class="crumb">Home / Dashboard — live MIS view (RFP Appx B §16–17)</div>
+  <div class="cards" id="statCards"></div>
+  <div class="two">
+    <div class="panel">
+      <h2>Pendency by Directorate <span class="i" onclick="info('dash')">i</span></h2>
+      <div class="ref" id="dashTiming">Pre-aggregated counters — no scan of the 1M documents</div>
+      <table id="dirTable"><thead><tr><th>Directorate</th><th>Files</th><th></th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="panel">
+      <h2>Latest Correspondence <span class="i" onclick="info('recent')">i</span></h2>
+      <div class="ref">Most recent dak across all sections</div>
+      <table id="recentTable"><thead><tr><th>File No</th><th>Subject</th><th>Status</th></tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Corpus Management</h2>
+    <div class="ref">Seed synthetic correspondence (Appx L #6 — 1M+ record corpus); indexes self-heal on every seed</div>
+    <div class="row">Documents: <input id="seedCount" value="100000" /> <button onclick="call(this,'seedOut','/api/seed','POST',{count:+seedCount.value}, loadDash)">Generate</button></div>
+    <pre id="seedOut" style="display:none"></pre>
+  </div>
+</div>
+
+<!-- ============ FILE REGISTRY ============ -->
+<div class="page" id="page-files">
+  <h1>File Registry (MFIR) <span class="i" onclick="info('files')">i</span></h1>
+  <div class="crumb">Home / File Registry — Master File Index Register view (RFP Appx B §33)</div>
+  <div class="panel">
+    <div class="row">
+      <select id="fStatus"><option value="">All status</option><option>OPEN</option><option>PENDING</option><option>CLOSED</option></select>
+      <select id="fDir"><option value="">All directorates</option><option>Ops</option><option>Maint</option><option>Admin</option><option>Plans</option><option>CIT</option><option>Trg</option><option>Works</option><option>Accts</option></select>
+      <input class="wide" id="fQ" placeholder="full-text filter (indexed)" />
+      <button onclick="filesPage=1;loadFiles()">Apply</button>
+      <span class="mini" id="fMeta"></span>
+    </div>
+    <pre id="fQuery" style="margin:10px 0"></pre>
+    <table id="filesTable"><thead><tr><th>File No</th><th>Subject</th><th>Directorate</th><th>Status</th><th>Priority</th><th>Date</th></tr></thead><tbody></tbody></table>
+    <div class="row" style="margin-top:12px">
+      <button class="ghost" onclick="filesPage=Math.max(1,filesPage-1);loadFiles()">Prev</button>
+      <span class="mini" id="fPage"></span>
+      <button class="ghost" onclick="filesPage++;loadFiles()">Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SEARCH ============ -->
+<div class="page" id="page-search">
+  <h1>Smart Search &amp; AI <span class="i" onclick="info('search')">i</span></h1>
+  <div class="crumb">Home / Search — full-text, semantic (AI), hybrid and RAG on one MongoDB cluster (RFP Appx B §48)</div>
+
+  <div class="panel">
+    <h2>Integrated architecture: operational DB + search + AI in one platform <span class="i" onclick="info('rag')">i</span></h2>
+    <div class="ref">No separate Elasticsearch / vector DB / sync pipeline — mongot is driven from the same replica set's oplog</div>
+    <div class="arch">
+      <div class="tier"><b>1 &middot; Ingest (once per document)</b><div class="boxes">
+        <div class="bx b-grey">Scanned file / image<small>attachment</small></div>
+        <div class="bx b-amber">OCR (tesseract-5)<small>text + confidence + lang</small></div>
+        <div class="bx b-blue">Metadata in MongoDB<small>one document: fileNo, subject, body, attachments[].ocr</small></div>
+        <div class="bx b-purple">Voyage AI <code>voyage-4-large</code><small>subject + body + OCR &rarr; 1024-d vector</small></div>
+        <div class="bx b-green">Stored in same doc<small><code>embedding</code> field</small></div>
+      </div></div>
+      <div class="arrow">&darr; replica-set oplog / change stream (automatic, no ETL) &darr;</div>
+      <div class="tier"><b>2 &middot; Index (mongot, managed by MongoDB Controllers for Kubernetes &mdash; MongoDBSearch CRD)</b><div class="boxes">
+        <div class="bx b-teal"><code>fts</code> Lucene index<small>subject, body, OCR text &middot; fuzzy &middot; highlights</small></div>
+        <div class="bx b-teal"><code>vec</code> HNSW vector index<small>1024-d cosine &middot; scalar quantised &middot; pre-filters directorate/status/classification</small></div>
+      </div></div>
+      <div class="arrow">&darr; query time &darr;</div>
+      <div class="tier"><b>3 &middot; Query &amp; RAG</b><div class="boxes">
+        <div class="bx b-navy">User question<small>natural language</small></div>
+        <div class="bx b-purple">Voyage query embedding<small><code>input_type: query</code></small></div>
+        <div class="bx b-teal"><code>$vectorSearch</code> / <code>$search</code> / <code>$rankFusion</code><small>top-k files, access-filtered</small></div>
+        <div class="bx b-amber">LLM (gpt-5.5)<small>grounded prompt: only retrieved files</small></div>
+        <div class="bx b-green">Answer + citations<small>[1] fileNo &hellip;</small></div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Try it &mdash; same question, four ways <span class="i" onclick="info('modes')">i</span></h2>
+    <div class="ref">Pick an example (each shows where one method wins), or type your own. The exact MongoDB query and server-side timing are shown below.</div>
+    <div class="row" style="margin-bottom:10px" id="exampleRow"></div>
+    <details class="query-guide">
+      <summary>What to type in each query mode</summary>
+      <div class="two">
+        <div><b>Keyword &middot; MongoDB <code>$text</code></b><p class="mini">Use distinctive words from the file: <code>liquidated damages</code>. Best when the wording is known.</p></div>
+        <div><b>Full-text &middot; Atlas Search <code>$search</code></b><p class="mini">Use OCR terms or tolerate typos: <code>pensoin terminl benifits</code>.</p></div>
+        <div><b>AI &middot; <code>$vectorSearch</code></b><p class="mini">Describe intent naturally, even without matching words: <code>airman needs time off because his mother is unwell</code>.</p></div>
+        <div><b>Hybrid &middot; <code>$rankFusion</code></b><p class="mini">Combine topic and intent: <code>late delivery of stores and the penalty to recover</code>.</p></div>
+      </div>
+    </details>
+    <div class="row">
+      <input class="wide" style="width:460px" id="aq" value="airman wants time off because his mother is unwell" />
+      <select id="aMode" style="width:210px">
+        <option value="text">1 Keyword $text (legacy)</option>
+        <option value="fts">2 Full-text $search (fuzzy)</option>
+        <option value="vector" selected>3 AI $vectorSearch</option>
+        <option value="hybrid">4 Hybrid $rankFusion</option>
+      </select>
+      <select id="aDir" style="width:150px"><option value="">any directorate</option><option>Ops</option><option>Maint</option><option>Admin</option><option>Plans</option><option>CIT</option><option>Trg</option><option>Works</option><option>Accts</option></select>
+      <button onclick="runSearch(this)">Search</button>
+      <button class="ghost" onclick="runAllModes(this)">Compare all 4</button>
+    </div>
+    <div class="mini" style="margin-top:6px">Directorate pre-filter applies to AI/hybrid modes (filter is evaluated inside the vector index, not after retrieval).</div>
+    <div id="aOut"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Ask eOffice (RAG with citations) <span class="i" onclick="info('ragflow')">i</span></h2>
+    <div class="ref">Ask about process, evidence, responsibility, or comparisons. Answers use retrieved files and cite each source.</div>
+    <div class="row" id="ragExamples"></div>
+    <div class="row" style="margin-top:8px"><input class="wide" style="width:620px" id="rq" value="What happens when a vendor delivers stores late and what penalty applies?" /><button onclick="runAsk(this)">Ask</button></div>
+    <div class="mini" style="margin-top:6px">Timing is split into Voyage embedding, MongoDB retrieval round-trip, and LLM generation. The &lt;10 ms target is for indexed database operations, not a full RAG request.</div>
+    <div id="rOut"></div>
+  </div>
+</div>
+
+<!-- ============ AUDIT & SECURITY ============ -->
+<div class="page" id="page-audit">
+  <h1>Audit &amp; Security <span class="i" onclick="info('audit')">i</span></h1>
+  <div class="crumb">Home / Audit — immutable trails with old/new values (RFP Appx B Section 2)</div>
+  <div class="panel doc">
+    <h2>What auditing does here, and what it can be configured to do</h2>
+    <div class="two">
+      <div>
+        <b>Three complementary layers (all active in this PoC)</b>
+        <ul>
+          <li><b>Native MongoDB Enterprise audit log</b> &mdash; server-side, tamper-resistant, written by <code>mongod</code> itself. Records authentication (success and failure), user/role changes, DDL (create/drop collection or index), shutdown, and CRUD on chosen collections. Applications cannot bypass it.</li>
+          <li><b>Application audit trail</b> &mdash; append-only <code>audit_log</code> collection with old and new values captured by change streams (pre/post images). RBAC allows insert+read only.</li>
+          <li><b>Ops Manager</b> &mdash; project-level audit of who changed deployment, users, backup and alert settings.</li>
+        </ul>
+      </div>
+      <div>
+        <b>What it can be configured to do</b>
+        <ul>
+          <li>Destination: JSON/BSON file, syslog or console; ship to SIEM (Splunk/ELK) via filebeat.</li>
+          <li>Filter by event type, user, role, database/collection with a match expression (this PoC audits <code>poc.audit_log</code> and <code>poc.personnel_confidential</code> writes).</li>
+          <li><code>auditAuthorizationSuccess</code>: also log successful reads/writes, not just failures (heavier; scope it with a filter).</li>
+          <li>Redact query values via log redaction for classified fields.</li>
+          <li>Pair with Queryable Encryption so even an authorised DBA's audit trail never exposes plaintext.</li>
+          <li>Retention: file rotation + immutable object storage (S3 Object Lock / WORM) for long-term evidence.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Native Enterprise audit log (live from the PRIMARY pod) <span class="i" onclick="info('nativeaudit')">i</span></h2>
+    <div class="ref">Active audit configuration and the latest events</div>
+    <div class="row"><button onclick="loadNativeAudit(this)">Load native audit events</button>
+      <button class="ghost" onclick="failedLogin(this)">Generate a failed login</button></div>
+    <pre id="auditCfg" style="display:none"></pre>
+    <div id="nativeAudit"></div>
+  </div>
+  <div class="two">
+    <div class="panel">
+      <h2>Tamper Attempt (Immutability)</h2>
+      <div class="ref">audituser may insert &amp; read audit_log — update/delete are denied by RBAC</div>
+      <button class="warn" onclick="call(this,'immOut','/api/immutability','POST',{})">Attempt tamper</button>
+      <pre id="immOut"></pre>
+    </div>
+    <div class="panel">
+      <h2>Change Capture (Old vs New)</h2>
+      <div class="ref">Change stream + pre/post images appends to the immutable trail</div>
+      <button onclick="call(this,'acOut','/api/audit-change','POST',{}, loadAudit)">Mutate a file &amp; capture</button>
+      <pre id="acOut"></pre>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Application Audit Trail (latest 30)</h2>
+    <div class="ref">Append-only collection</div>
+    <button class="ghost" onclick="loadAudit()">Refresh</button>
+    <pre id="auditList"></pre>
+  </div>
+</div>
+
+<!-- ============ KMS & ENCRYPTION ============ -->
+<div class="page" id="page-kms">
+  <h1>KMS &amp; Queryable Encryption <span class="i" onclick="info('qe')">i</span></h1>
+  <div class="crumb">Home / KMS — fields hidden from everyone with database access, yet still searchable by the authorised application</div>
+  <div class="panel">
+    <h2>How it works</h2>
+    <div class="arch">
+      <div class="tier"><b>Key hierarchy</b><div class="boxes">
+        <div class="bx b-red">AWS KMS CMK<small>never leaves KMS &middot; IAM role of the app host</small></div>
+        <div class="bx b-amber">Data Encryption Keys<small>one per field &middot; stored wrapped in <code>encryption.__keyVault</code></small></div>
+        <div class="bx b-purple">Encrypted fields<small>AES-256, randomised; equality / range tokens for queries</small></div>
+      </div></div>
+      <div class="tier"><b>Who sees what</b><div class="boxes">
+        <div class="bx b-green">Authorised app<small>driver encrypts queries + decrypts results client-side</small></div>
+        <div class="bx b-navy">MongoDB server<small>sees ciphertext only, matches on encrypted tokens</small></div>
+        <div class="bx b-grey">DBA / mongosh / Ops Manager / backups / disk<small>ciphertext only</small></div>
+      </div></div>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Live comparison on <code>poc.personnel_confidential</code></h2>
+    <div class="ref">Left: what the authorised application gets. Right: what an internal DBA gets from the same documents.</div>
+    <div class="row">Service No: <input id="qeSvc" value="774411-K" /> Annual pay &gt; <input id="qePay" value="1000000" />
+      <button onclick="loadQe(this)">Run encrypted queries</button></div>
+    <div id="qeOut"></div>
+  </div>
+</div>
+
+<!-- ============ ARCHITECTURE ============ -->
+<div class="page" id="page-arch">
+  <h1>Architecture <span class="i" onclick="info('archinfo')">i</span></h1>
+  <div class="crumb">Home / Architecture — one platform: operational data, search, AI, security, operations</div>
+  <div class="tabs" id="archTabs">
+    <button class="on" data-t="k8s">Kubernetes (this PoC)</button>
+    <button data-t="vm">Core DB on VMs</button>
+    <button data-t="ha">HA / DR scenarios</button>
+    <button data-t="om">Ops Manager</button>
+  </div>
+  <div id="archBody"></div>
+</div>
+
+
+<!-- ============ RESILIENCE ============ -->
+<div class="page" id="page-resil">
+  <h1>Resilience — HA / DR</h1>
+  <div class="crumb">Home / Resilience — 3-member replica set on Kubernetes (RFP Appx B 1.6, Appx L #2)</div>
+  <div class="panel">
+    <h2>Cluster Topology <span class="mini">(live, 1s refresh + kubelet pod state)</span> <span class="i" onclick="info('topo')">i</span></h2>
+    <table id="topoTable"><thead><tr><th>Node</th><th>Region</th><th>State</th><th>Priority</th><th>Ping</th><th>Repl Lag</th><th>Control</th></tr></thead><tbody></tbody></table>
+    <div class="row" style="margin-top:12px" id="regionCtl">
+      <button class="warn" onclick="region('DC1','stop')">Kill DC1</button>
+      <button class="go" onclick="region('DC1','start')">Restore DC1</button>
+      <button class="warn" onclick="region('DC2','stop')">Kill DC2</button>
+      <button class="go" onclick="region('DC2','start')">Restore DC2</button>
+    </div>
+    <div class="row" style="margin-top:12px; display:none" id="k8sCtl">
+      <button class="warn" onclick="call(this,'topoOut','/api/node/'+primaryPod+'/stop','POST',{}, burstTopo)">Kill PRIMARY pod</button>
+      <button class="ghost" onclick="call(this,'topoOut','/api/node/'+primaryPod+'/stepdown','POST',{}, burstTopo)">Step down PRIMARY</button>
+      <span class="mini">pods are recreated by the StatefulSet (MongoDB Controllers for Kubernetes)</span>
+    </div>
+    <div class="row" style="margin-top:12px; display:none" id="atlasCtl">
+      <button class="warn" onclick="call(this,'topoOut','/api/atlas/failover','POST',{})">Test Failover (Atlas)</button>
+      <span class="mini">node lifecycle managed by Atlas</span>
+    </div>
+    <pre id="topoOut" style="display:none"></pre>
+  </div>
+  <div class="panel">
+    <h2>Zero Data Loss Drill <span class="i" onclick="info('zeroloss')">i</span></h2>
+    <div class="ref">w:majority write loop — kill the PRIMARY mid-run; verdict shows acked == found + election stall</div>
+    <div class="row">Seconds: <input id="zlSec" value="30" /><button onclick="call(this,'zlOut','/api/zeroloss','POST',{seconds:+zlSec.value})">Start drill</button></div>
+    <pre id="zlOut"></pre>
+  </div>
+  <div class="panel">
+    <h2>Regional Read Routing <span class="i" onclick="info('readpref')">i</span></h2>
+    <div class="ref">Tag-aware read preference — DR/DC2 reads offload the primary</div>
+    <div class="row"><select id="rpRegion"><option>DC1</option><option>DC2</option><option>DR</option></select><button onclick="call(this,'rpOut','/api/readpref','POST',{region:rpRegion.value})">Read</button></div>
+    <pre id="rpOut"></pre>
+  </div>
+</div>
+
+<!-- ============ PERFORMANCE LAB ============ -->
+<div class="page" id="page-perf">
+  <h1>Performance Lab</h1>
+  <div class="crumb">Home / Performance — RFP Appx D 3.2 &amp; 5.5 evidence</div>
+  <div class="ref">Results show the exact operation, index plan, and explain metrics where applicable. P99 is client-observed; timingBreakdown separates operation time, MongoDB command round-trip, and pool checkout. Command round-trip includes server plus network; explain execution time is representative, not per-operation p99.</div>
+  <div class="two">
+    <div class="panel">
+      <h2>P99 Latency <span class="mini">(target &lt; 10ms)</span> <span class="i" onclick="info('p99')">i</span></h2>
+      <div class="row"><select id="latMode"><option value="read">read</option><option value="write">write w:majority</option></select><select id="latPattern" title="Read access pattern"><option value="random">random files (sample 1,000)</option><option value="hot">same file (hot key)</option></select> Ops: <input id="latOps" value="2000" /><button onclick="call(this,'latOut','/api/latency','POST',{mode:latMode.value,readPattern:latPattern.value,ops:+latOps.value})">Run</button></div>
+      <pre id="latOut"></pre>
+    </div>
+    <div class="panel">
+      <h2>Durability Premium (w:1 vs w:majority) <span class="i" onclick="info('wc')">i</span></h2>
+      <div class="row">Ops: <input id="wcOps" value="500" /><button onclick="call(this,'wcOut','/api/writeconcern','POST',{ops:+wcOps.value})">Compare</button></div>
+      <pre id="wcOut"></pre>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Read Load Test <span class="i" onclick="info('readload')">i</span></h2>
+    <div class="ref">Fixed offered read rate, up to 10,000 concurrent requests and 20,000 reads/sec, generated by parallel worker processes connected directly to the mongod pods (no tunnel). A 1-in-100 sample is measured by MongoDB's profiler; profiling is enabled only for this run and restored afterward.</div>
+    <div class="row">
+      <label>Duration <select id="rlDuration"><option>10</option><option>20</option><option>30</option><option value="120">2 min</option></select></label>
+      <label>Target reads/sec <input id="rlTps" type="number" min="1" max="20000" value="1000" /></label>
+      <label>Max concurrent users <input id="rlUsers" type="number" min="1" max="10000" value="100" /></label>
+      <select id="rlPattern" title="Read access pattern"><option value="random">random files</option><option value="hot">same file (hot key)</option></select>
+      <select id="rlPreference" title="Read preference"><option value="primary">primary</option><option value="secondaryPreferred">secondaryPreferred</option></select>
+      <button id="rlStart" onclick="startReadLoad(this)">Start read test</button>
+    </div>
+    <div id="rlOut" class="metrics" aria-live="polite"></div>
+    <pre id="rlDetails" style="display:none"></pre>
+  </div>
+  <div class="two">
+    <div class="panel">
+      <h2>Index Strategy Comparison <span class="i" onclick="info('idxcmp')">i</span></h2>
+      <div class="ref">fileNo_1 vs compound vs COLLSCAN on the same corpus</div>
+      <button onclick="call(this,'icOut','/api/index-compare','POST',{})">Compare 3 scenarios</button>
+      <pre id="icOut"></pre>
+    </div>
+    <div class="panel">
+      <h2>Indexes &amp; Query Plan <span class="i" onclick="info('explain')">i</span></h2>
+      <div class="ref">explain() proof: IXSCAN not COLLSCAN</div>
+      <button class="ghost" onclick="call(this,'idxOut','/api/indexes','GET')">List indexes</button>
+      <button class="ghost" onclick="call(this,'idxOut','/api/explain','GET')">Explain plan</button>
+      <pre id="idxOut"></pre>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Server-Side Op Latencies (per node) <span class="i" onclick="info('opl')">i</span></h2>
+    <div class="ref">serverStatus().opLatencies — DB-layer evidence independent of client queueing</div>
+    <button class="ghost" onclick="call(this,'oplOut','/api/oplatencies','GET')">Fetch</button>
+    <pre id="oplOut"></pre>
+  </div>
+</div>
+
+</main>
+</div>
+
+<div id="infoBg" onclick="if(event.target===this)closeInfo()"><div id="infoBox"></div></div>
+
+<script>
+let MODE = { atlas: false }, filesPage = 1;
+
+/* nav */
+document.querySelectorAll('.nav-item[data-page]').forEach(el => el.onclick = () => {
+  document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('page-' + el.dataset.page).classList.add('active');
+  if (el.dataset.page === 'dash') loadDash();
+  if (el.dataset.page === 'files') loadFiles();
+  if (el.dataset.page === 'audit') loadAudit();
+  if (el.dataset.page === 'arch') showArch(archTab);
+});
+
+async function call(btn, outId, url, method, body, after) {
+  const out = document.getElementById(outId);
+  out.style.display = ''; out.textContent = 'running…';
+  if (btn) btn.disabled = true;
+  try {
+    const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: method === 'POST' ? JSON.stringify(body || {}) : undefined });
+    out.textContent = JSON.stringify(await r.json(), null, 2);
+    if (after) after();
+  } catch (e) { out.textContent = 'ERROR: ' + e.message; }
+  if (btn) btn.disabled = false;
+}
+
+/* dashboard */
+async function loadDash() {
+  try {
+    const d = await (await fetch('/api/overview')).json();
+    const get = (arr, k) => (arr.find(x => x._id === k) || {}).n || 0;
+    document.getElementById('statCards').innerHTML = `
+      <div class="stat"><div class="k">${(d.total||0).toLocaleString()}</div><div class="l">Total Correspondence</div></div>
+      <div class="stat"><div class="k" style="color:var(--green)">${get(d.byStatus,'OPEN').toLocaleString()}</div><div class="l">Open Files</div></div>
+      <div class="stat"><div class="k" style="color:var(--amber)">${get(d.byStatus,'PENDING').toLocaleString()}</div><div class="l">Pending Action</div></div>
+      <div class="stat"><div class="k" style="color:var(--red)">${(get(d.byPriority,'URGENT')+get(d.byPriority,'TOP')).toLocaleString()}</div><div class="l">Urgent / Top Priority</div></div>
+      <div class="stat"><div class="k" style="color:var(--blue)">${(d.audits||0).toLocaleString()}</div><div class="l">Audit Trail Entries</div></div>`;
+    const maxN = Math.max(...d.byDirectorate.map(x => x.n), 1);
+    if (d.timing) document.getElementById('dashTiming').textContent = `Whole dashboard served in ${d.timing.totalMs} ms from ${d.timing.counterDocs} pre-aggregated counter docs — no scan of ${d.total.toLocaleString()} files`;
+    document.querySelector('#dirTable tbody').innerHTML = d.byDirectorate.map(x =>
+      `<tr><td>${x._id}</td><td>${x.n.toLocaleString()}</td><td style="width:45%"><div style="background:var(--blue);height:8px;border-radius:4px;width:${(x.n/maxN*100).toFixed(0)}%"></div></td></tr>`).join('');
+    document.querySelector('#recentTable tbody').innerHTML = d.recent.map(x =>
+      `<tr><td class="mini">${x.fileNo}</td><td>${x.subject}</td><td><span class="chip ${x.status}">${x.status}</span></td></tr>`).join('');
+  } catch {}
+}
+
+/* file registry */
+async function loadFiles() {
+  const p = new URLSearchParams({ page: filesPage });
+  if (fStatus.value) p.set('status', fStatus.value);
+  if (fDir.value) p.set('directorate', fDir.value);
+  if (fQ.value) p.set('q', fQ.value);
+  const d = await (await fetch('/api/files?' + p)).json();
+  if (d.error) return;
+  document.getElementById('fMeta').textContent =
+    `${d.count.toLocaleString()}${d.count === 10000 ? '+' : ''} files · page fetch ${d.findMs}ms · count ${d.countMs}ms (${d.countSource}) · ${d.plan || ''}${d.indexUsed ? ' · index: ' + d.indexUsed : ''}`;
+  document.getElementById('fPage').textContent = `page ${d.page} / ${d.pages}`;
+  document.getElementById('fQuery').textContent = `// ${d.plan || '?'} on index ${d.indexUsed || '?'}  — page ${d.findMs} ms\n${d.query}`;
+  document.querySelector('#filesTable tbody').innerHTML = d.docs.map(x => `
+    <tr><td class="mini">${x.fileNo}</td><td>${x.subject}</td><td>${x.directorate}</td>
+    <td><span class="chip ${x.status}">${x.status}</span></td>
+    <td><span class="chip ${x.priority}">${x.priority}</span></td>
+    <td class="mini">${new Date(x.createdAt).toLocaleDateString()}</td></tr>`).join('');
+}
+
+/* audit */
+async function loadAudit() {
+  const d = await (await fetch('/api/audit-log')).json();
+  document.getElementById('auditList').textContent = JSON.stringify(d.docs, null, 2);
+}
+
+/* topology */
+async function nodeCtl(name, action) { await fetch(`/api/node/${name}/${action}`, { method: 'POST' }); burstTopo(); }
+async function region(r, action) { await fetch(`/api/region/${r}/${action}`, { method: 'POST' }); burstTopo(); }
+
+// After a kill / step-down poll every 300ms for 25s so the election is visible as it happens.
+let burstTimer = null, topoBusy = false;
+function burstTopo() {
+  clearInterval(burstTimer);
+  const until = Date.now() + 25000;
+  refreshTopo();
+  burstTimer = setInterval(() => { refreshTopo(); if (Date.now() > until) clearInterval(burstTimer); }, 300);
+}
+
+async function refreshTopo() {
+  if (topoBusy) return;
+  topoBusy = true;
+  const tbody = document.querySelector('#topoTable tbody');
+  const pill = document.getElementById('clusterPill');
+  try {
+    const d = await (await fetch('/api/status', { cache: 'no-store' })).json();
+    if (d.error) throw new Error(d.error);
+    const pri = d.members.find(m => m.state === 'PRIMARY');
+    if (pri) primaryPod = pri.node;
+    pill.textContent = 'cluster: ' + (pri ? 'healthy · primary ' + pri.node : 'ELECTING…');
+    pill.className = 'pill ' + (pri ? 'ok' : 'bad');
+    tbody.innerHTML = d.members.map(m => `
+      <tr><td>${m.node}${m.pod && m.pod !== 'Running' ? ` <span class="mini">(pod ${m.pod})</span>` : ''}</td>
+      <td><span class="chip ${m.region}">${m.region}</span></td>
+      <td class="st-${m.health ? m.state : (m.state === 'TERMINATING' || m.state === 'STARTING' ? m.state : 'DOWN')}">${m.health ? m.state : (m.state === 'TERMINATING' || m.state === 'STARTING' ? m.state : 'DOWN')}</td>
+      <td>${m.priority ?? ''}</td>
+      <td>${m.pingMs != null ? m.pingMs + 'ms' : '—'}</td>
+      <td>${m.replicationLagSec != null ? m.replicationLagSec.toFixed(1) + 's' : '—'}</td>
+      <td>${MODE.kubernetes ?
+        `<button class="ghost" onclick="nodeCtl('${m.node}','stop')">kill pod</button>` :
+        MODE.atlas ? '<span class="mini">atlas-managed</span>' :
+        `<button class="ghost" onclick="nodeCtl('${m.node}','stop')">stop</button>
+         <button class="ghost" onclick="nodeCtl('${m.node}','start')">start</button>`}</td></tr>`).join('');
+    document.getElementById('topoSrc') && (document.getElementById('topoSrc').textContent = d.source || '');
+  } catch (e) {
+    pill.textContent = 'cluster: unreachable'; pill.className = 'pill bad';
+    tbody.innerHTML = `<tr><td colspan="7" class="st-DOWN">status unavailable (election in progress?) — ${e.message}</td></tr>`;
+  }
+  topoBusy = false;
+}
+
+/* fixed-arrival read load */
+let activeReadRun = null;
+const fmtLatency = s => s ? `p50 ${s.p50Ms} ms · p95 ${s.p95Ms} ms · p99 ${s.p99Ms} ms` : 'collecting samples';
+function renderReadLoad(d) {
+  document.getElementById('rlOut').innerHTML = `
+    <div class="m"><b>${d.state}</b>run state</div>
+    <div class="m"><b>${d.achievedTps} / ${d.targetTps}</b>completed / target reads/sec</div>
+    <div class="m"><b>${d.completed.toLocaleString()} / ${d.offered.toLocaleString()}</b>completed / offered</div>
+    <div class="m"><b>${d.inFlight} / ${d.peakInFlight}</b>in flight / peak</div>
+    <div class="m"><b>${d.errors} · ${d.droppedForUserCap}</b>errors · dropped at user cap</div>
+    <div class="m"><b>${fmtLatency(d.mongoWorkingMs)}</b>mongod CPU time per read (sampled) <span class="i" onclick="info('readmetrics')">i</span></div>
+    <div class="m"><b>${fmtLatency(d.mongoServerElapsedMs)}</b>mongod elapsed time per read (sampled) <span class="i" onclick="info('readmetrics')">i</span></div>
+    <div class="m"><b>${fmtLatency(d.clientOperationMs)}</b>client-observed operation time</div>
+    <div class="m"><b>${d.profiledOperations} (${d.serverSamplePercent}%)</b>server profile samples · 1 per ${d.sampleEvery}</div>
+    ${d.profiledOperations < 100 ? '<div class="m"><b>Low sample count</b>server percentiles are provisional; collect at least 100 tagged operations</div>' : ''}`;
+  const detail = document.getElementById('rlDetails');
+  detail.style.display = '';
+  detail.textContent = [
+    `Query: ${d.query}`,
+    `Index: ${d.index} · read preference: ${d.readPreference} · state: ${d.state}`,
+    `Server work examined ${d.keysExamined} index keys and ${d.docsExamined} documents`,
+    `Observed plan summaries: ${JSON.stringify(d.planSummaries)}`,
+    d.error ? `ERROR: ${d.error}` : '',
+    d.profilerCaptureError ? `Profiler sample warning: ${d.profilerCaptureError}` : '',
+    d.restoreErrors?.length ? `PROFILER RESTORE WARNING: ${d.restoreErrors.join('; ')}` : '',
+    d.note,
+  ].filter(Boolean).join('\n');
+}
+async function pollReadLoad(runId) {
+  try {
+    const response = await fetch('/api/read-load/' + encodeURIComponent(runId), { cache: 'no-store' });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Unable to read test status');
+    renderReadLoad(data);
+    if (data.state === 'running' || data.state === 'preparing') setTimeout(() => pollReadLoad(runId), 1000);
+    else {
+      activeReadRun = null;
+      document.getElementById('rlStart').disabled = false;
+    }
+  } catch (error) {
+    document.getElementById('rlDetails').textContent = 'Status error: ' + error.message;
+    activeReadRun = null;
+    document.getElementById('rlStart').disabled = false;
+  }
+}
+async function startReadLoad(button) {
+  button.disabled = true;
+  document.getElementById('rlDetails').style.display = '';
+  document.getElementById('rlDetails').textContent = 'Preparing replica members and temporary sampled profiling...';
+  try {
+    const response = await fetch('/api/read-load', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        durationSec: +rlDuration.value, targetTps: +rlTps.value, maxUsers: +rlUsers.value,
+        readPattern: rlPattern.value, readPreference: rlPreference.value,
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Unable to start read test');
+    activeReadRun = data.runId;
+    renderReadLoad(data);
+    pollReadLoad(activeReadRun);
+  } catch (error) {
+    document.getElementById('rlDetails').textContent = 'ERROR: ' + error.message;
+    button.disabled = false;
+  }
+}
+
+/* ---------- info (i) modal ---------- */
+const INFO = {
+  dash: ['Why the dashboard is instant', `
+    <p>The tiles and the directorate table are <b>not</b> computed by scanning the 1,000,000 files. They sum ~24 documents in the <code>counters</code> collection (one per directorate x status).</p>
+    <pre>db.counters.find({})   // ~24 docs, _id = "Ops|OPEN", { n: 41873 }</pre>
+    <h4>Strategy: pre-aggregation + change streams</h4>
+    <ul><li>A change stream on <code>correspondence</code> (with pre-images) increments/decrements the counter whenever a file changes status or is destroyed &mdash; counts stay exact.</li>
+    <li>Cost moves from every page view (read: O(N)) to every status change (write: O(1)).</li>
+    <li>The priority tile uses a grouped aggregation cached for 60 s; it is the only scan, and not on the request path.</li></ul>`],
+  recent: ['Latest correspondence: index-ordered read', `
+    <pre>db.correspondence.find({}, {fileNo:1,subject:1,directorate:1,status:1,priority:1,createdAt:1})
+  .sort({createdAt:-1}).limit(6)</pre>
+    <p>Served by the <code>createdAt_-1</code> index: the index is already in sort order, so MongoDB reads the first 6 entries and fetches 6 documents &mdash; <b>no in-memory sort, 6 keys examined, 6 documents examined</b>, independent of corpus size.</p>
+    <h4>Covered-query note</h4><p>A query is <i>covered</i> when the filter and projection use only indexed fields, so MongoDB answers from the index alone (no document fetch, <code>totalDocsExamined: 0</code>). Here we need subject/priority, so it is IXSCAN + 6 fetches; a pure lookup such as &ldquo;list fileNo by directorate+status&rdquo; with a <code>{directorate,status,fileNo}</code> index would be fully covered.</p>`],
+  files: ['File Registry: how paging stays fast at 1M files', `
+    <h4>Query</h4>
+    <pre>find({status, directorate}).sort({createdAt:-1}).skip(n).limit(15)</pre>
+    <h4>Index strategy (shown live in the box under the filters)</h4>
+    <ul>
+    <li><code>{directorate:1, status:1, createdAt:-1}</code> compound index: <b>Equality, Sort, Range</b> rule &mdash; two equality fields first, then the sort field, so filtered + sorted pages need no in-memory sort.</li>
+    <li><code>createdAt_-1</code> serves the unfiltered view.</li>
+    <li><b>Partial indexes</b> (<code>open_recent_partial</code> etc.) index only one status each &mdash; smaller, hotter in RAM.</li>
+    <li><b>Counts:</b> the total is read from pre-aggregated counters (O(1)) instead of <code>countDocuments()</code> walking the index.</li>
+    <li>Only 15 documents are fetched per page and only the listed fields are projected, keeping documents small on the wire.</li></ul>
+    <h4>Scaling note</h4><p>Deep pages with <code>skip</code> still walk index keys; for very deep paging use range paging (<code>createdAt &lt; lastSeen</code>), which stays constant-time.</p>`],
+  search: ['Smart Search: what is on this page', `
+    <ul><li><b>Keyword (<code>$text</code>)</b> &mdash; legacy text index inside <code>mongod</code>: exact stems only, no typo tolerance, slow at 1M docs (seconds).</li>
+    <li><b>Full-text (<code>$search</code>)</b> &mdash; Lucene index in <code>mongot</code>: fuzzy matching, relevance scoring (BM25), highlights, and it also searches the <b>OCR text of scanned attachments</b>.</li>
+    <li><b>AI (<code>$vectorSearch</code>)</b> &mdash; finds documents by <i>meaning</i>. &ldquo;time off because his mother is unwell&rdquo; finds &ldquo;Compassionate leave&rdquo; with zero shared words.</li>
+    <li><b>Hybrid (<code>$rankFusion</code>)</b> &mdash; fuses keyword and semantic rankings (Reciprocal Rank Fusion): best of both.</li></ul>
+    <p>Each result shows the exact MongoDB query, <b>server-side execution time</b> (from <code>explain("executionStats")</code>), client round-trip time, and for AI modes the embedding time.</p>`],
+  rag: ['Integrated MongoDB + RAG architecture', `
+    <p>Everything lives in one database. A file is one document: structured metadata (file number, directorate, status), the body, OCR text of scans, and a 1024-dimension embedding produced by Voyage AI <code>voyage-4-large</code>.</p>
+    <h4>Why this matters</h4>
+    <ul><li><b>No ETL / dual-write:</b> mongot tails the replica set's change stream; indexes update automatically.</li>
+    <li><b>One security model:</b> RBAC, audit and encryption apply to search too; a user only retrieves what they may see (pre-filter on <code>directorate</code>, <code>classification</code> inside the vector index).</li>
+    <li><b>One HA story:</b> mongot runs next to the replica set under the same Kubernetes operator.</li>
+    <li><b>Scanned images:</b> OCR text is stored under <code>attachments[].ocr</code> and embedded with the document, so a search can hit text that only exists inside a scan.</li></ul>`],
+  modes: ['Which method for which question', `
+    <table><tr><th>Question type</th><th>Best method</th></tr>
+    <tr><td>File number, exact phrase</td><td>Keyword / full-text</td></tr>
+    <tr><td>Typos, partial words, OCR noise</td><td>Full-text with fuzzy</td></tr>
+    <tr><td>Same idea, different words</td><td>AI vector search</td></tr>
+    <tr><td>Natural language with key terms</td><td>Hybrid</td></tr>
+    <tr><td>&ldquo;What is the procedure for &hellip;&rdquo;</td><td>RAG (vector retrieval + LLM answer)</td></tr></table>
+    <h4>Why vector search is fast</h4><p>HNSW graph over scalar-quantised (int8) vectors: ~4x less memory, approximate nearest-neighbour with <code>numCandidates: 200</code>; results are re-scored against full-precision vectors.</p>`],
+  ragflow: ['RAG flow, step by step', `
+    <ol><li>The question is embedded by Voyage (<code>input_type: query</code>) &mdash; timing shown as <i>embed</i>.</li>
+    <li><code>$vectorSearch</code> returns the 5 nearest files (timing shown as <i>retrieval</i>, typically tens of ms).</li>
+    <li>The files (including OCR text) are placed in a prompt that tells the LLM to answer <b>only</b> from them and cite [n].</li>
+    <li>The answer and its sources (fileNo, directorate, similarity score) are shown so every claim is traceable.</li></ol>
+    <p>The LLM is an external service; if it is unreachable the retrieval result and sources are still shown.</p>`],
+  audit: ['Auditing', `<p>See the panel on the page for the three layers. Native audit configuration for this PoC (set in the MongoDB custom resource, applied by Ops Manager to every member):</p>
+    <pre>auditLog: destination: file, format: JSON
+filter: authenticate, createUser, dropUser, createRole, grantRoles,
+        create/dropCollection, create/dropIndex, shutdown,
+        insert/update/remove on poc.audit_log and poc.personnel_confidential
+auditAuthorizationSuccess: true</pre>`],
+  nativeaudit: ['Native audit events', `<p>Read directly from <code>/var/log/mongodb-mms-automation/audit.json</code> in the PRIMARY pod. These are written by the database engine, not by application code. Use <i>Generate a failed login</i> and reload to see an <code>authenticate</code> event with result 18 (authentication failed) and the client address.</p>`],
+  qe: ['Queryable Encryption + KMS', `
+    <h4>Fields in this demo</h4>
+    <ul><li><code>serviceNo</code> &mdash; encrypted, <b>equality</b> queryable.</li>
+    <li><code>annualPay</code> &mdash; encrypted, <b>range</b> queryable (&gt;, &lt;).</li>
+    <li><code>medicalCategory</code> &mdash; encrypted, not queryable (fully hidden).</li></ul>
+    <h4>Keys</h4><p>Each field has its own data key. Data keys are stored in <code>encryption.__keyVault</code> wrapped by an <b>AWS KMS customer master key</b>. The CMK never leaves KMS; the app host's IAM role is the only principal allowed to unwrap keys, and every unwrap is logged in CloudTrail. Revoking the KMS grant makes the data unreadable everywhere (crypto-shredding).</p>
+    <h4>Not the same as disk encryption</h4><p>Encryption at rest protects a stolen disk. Queryable Encryption also protects against a <i>privileged insider</i>: the DBA, a root user on the node, Ops Manager, backups and logs only ever hold ciphertext. The server evaluates queries over encrypted tokens and never sees plaintext or keys.</p>`],
+  topo: ['Cluster topology: why it updates immediately', `
+    <p>The table merges two sources: the replica set (<code>replSetGetStatus</code> from any reachable member, 1 s polling) and the Kubernetes kubelet (pod phase). A pod shows <b>TERMINATING</b> the instant it is deleted, before the database notices; while no primary exists the header shows <b>ELECTING</b>. After a kill / step-down the page polls every 300 ms for 25 s.</p>
+    <p>Typical failover: election completes in a few seconds; retryable writes make applications continue without errors; the StatefulSet recreates the pod, which resyncs and rejoins as SECONDARY. Ops Manager shows the same events in its Deployment view.</p>`],
+  zeroloss: ['Zero data loss drill', `<p>A writer inserts documents with <code>w:"majority"</code> (acknowledged only after a majority of members hold the write) and retryable writes. Kill the PRIMARY mid-run: every acknowledged write must still exist afterwards (<code>acked == found</code>). The reported stall is the election window. This is how RPO = 0 is evidenced.</p>`],
+  readpref: ['Regional read routing', `<p>Read preference with tag sets sends reads to the nearest member (for example a DR or second-DC secondary), offloading the primary. Reads from secondaries can be slightly stale (replication lag shown in the topology table); use <code>readConcern: majority</code> / primary reads where strict freshness is needed.</p>`],
+  p99: ['P99 latency', `<p>Point lookups on indexed <code>fileNo</code> (IXSCAN, 1 key, 1 document). The P99 is the 99th-percentile client latency; the <i>server-side op latency</i> panel proves the database side independently of client queueing. Targets: &lt; 10 ms (RFP Appx D).</p>`],
+  wc: ['Durability premium', `<p><code>w:1</code> acknowledges after the primary writes; <code>w:majority</code> waits for replication to a majority, giving zero loss on failover. The difference is the price of durability.</p>`],
+  readload: ['Read load and database timing', `<p>This test offers a fixed rate of read-only <code>findOne({fileNo})</code> operations, capped at 5,000/sec, with an in-flight user cap up to 10,000. Durations are 10, 20, 30, or 120 seconds. Random mode selects from 1,000 sampled file numbers; hot-key mode repeatedly reads one.</p><p>To show MongoDB-side timing, the test temporarily enables level-1 profiling with a filter for a unique comment on 1 in every 100 operations, across all replica members. The original profiler settings are restored after the run. Profiling adds overhead, so use this as a diagnostic run, not the official unprofiled TPS result. MongoDB reports millisecond-resolution values; sub-millisecond reads may appear as 0 ms. If a profiler is already enabled or has a custom filter, the test refuses to replace it.</p>`],
+  idxcmp: ['Index strategy comparison', `<p>The same lookup run three ways: single-field index, compound index, and no index (COLLSCAN). The gap (often 1000x+) is why index selectivity decides P99. <b>Covered queries</b> (answered from the index alone, <code>totalDocsExamined: 0</code>) are the fastest tier when the projection fits the index.</p>`],
+  explain: ['Query plan', `<p><code>explain("executionStats")</code> reports the winning plan (<code>IXSCAN</code> vs <code>COLLSCAN</code>), keys and documents examined, and server execution time. Healthy: keysExamined ~ nReturned.</p>`],
+  readmetrics: ['What the three read timings mean', `<ul><li><b>mongod elapsed</b> &mdash; wall-clock time inside the database from command start to finish (profiler <code>micros</code>). Includes waiting for locks, storage and CPU scheduling; excludes network and driver.</li><li><b>mongod CPU time</b> &mdash; CPU actually spent executing the read (profiler <code>cpuNanos</code>). Elapsed minus CPU is time spent waiting.</li><li><b>client-observed</b> &mdash; what the application sees: driver, network and server. This is the number the RFP P99 refers to.</li></ul><p>An indexed <code>fileNo</code> read touches 1 key and 1 document, so server time is typically ~0.1 ms; the rest of the client time is network and driver. The values were previously 0 because the profiler's <code>millis</code> field is whole milliseconds.</p>`],
+  opl: ['Server-side op latencies', `<p><code>serverStatus().opLatencies</code> is measured inside <code>mongod</code>: pure database time per read/write/command, independent of network and client. Compare with client P99 to show where time is spent.</p>`],
+  archinfo: ['Architecture', `<p>Use the tabs to walk through: how Kubernetes runs everything in this PoC; how the same platform works when the core database stays on VMs; HA/DR scenarios; and what Ops Manager provides for operations and security.</p>`],
+};
+function info(k) {
+  const [t, h] = INFO[k] || ['Info', 'No details.'];
+  document.getElementById('infoBox').innerHTML = `<h3>${t}</h3>${h}<div style="text-align:right;margin-top:14px"><button onclick="closeInfo()">Close</button></div>`;
+  document.getElementById('infoBg').style.display = 'flex';
+}
+function closeInfo() { document.getElementById('infoBg').style.display = 'none'; }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeInfo(); });
+
+/* ---------- smart search ---------- */
+const esc = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+const EXAMPLES = [
+  { l: 'Text: liquidated damages', q: 'liquidated damages', mode: 'text', why: 'MongoDB $text matches indexed terms; use when you know the wording.' },
+  { l: 'Text: compassionate leave', q: 'compassionate leave mother hospital', mode: 'text', why: 'Keyword search across the legacy text index.' },
+  { l: 'Full-text: typo tolerant', q: 'pensoin terminl benifits', mode: 'fts', why: 'Atlas Search fuzzy matching can recover common spelling errors.' },
+  { l: 'Full-text: scanned OCR', q: 'hospital discharge summary medical board', mode: 'fts', why: 'Searches extracted OCR text from scanned attachments.' },
+  { l: 'AI: describe a situation', q: 'airman wants time off because his mother is unwell', mode: 'vector', why: 'Semantic retrieval can find compassionate-leave files without shared keywords.' },
+  { l: 'AI: explain a rule', q: 'what can be recovered when a supplier delivers late', mode: 'vector', why: 'Ask by intent; vector search finds semantically related records.' },
+  { l: 'Hybrid: topic + outcome', q: 'vendor supplied stores late penalty clause', mode: 'hybrid', why: 'Combines keyword precision and semantic recall using $rankFusion.' },
+  { l: 'Hybrid: incident steps', q: 'bird strike reporting actions and follow-up', mode: 'hybrid', why: 'Combines matching incident terms with related procedural records.' },
+  { l: 'AI + directorate filter', q: 'cyber security incident reporting procedure', mode: 'vector', dir: 'CIT', why: 'Directorate filter is evaluated inside vector retrieval.' },
+];
+const RAGQ = [
+  'What happens when a vendor delivers stores late and what penalty applies?',
+  "What is the process for compassionate leave when an airman's mother is seriously unwell?",
+  'How should a flight safety occurrence such as a bird strike be reported?',
+  'Which documents support a pension case sent to PCDA?',
+  'What immediate steps are described for a cyber security incident?',
+  'Compare the late-delivery cases and explain how liquidated damages are calculated.',
+  'What reasons are cited when someone requests a posting review on medical grounds?',
+  'What evidence is mentioned in the scanned hospital records?',
+];
+document.getElementById('exampleRow').innerHTML = EXAMPLES.map((e, i) => `<span class="ex" title="${esc(e.why)}" onclick="useExample(${i})">${esc(e.l)}</span>`).join('');
+document.getElementById('ragExamples').innerHTML = RAGQ.map(q => `<span class="ex" onclick="rq.value=this.textContent">${esc(q)}</span>`).join('');
+function useExample(i) {
+  const e = EXAMPLES[i];
+  aq.value = e.q; aMode.value = e.mode; aDir.value = e.dir || '';
+  document.getElementById('aOut').innerHTML = `<div class="mini" style="margin-top:8px">${esc(e.why)}</div>`;
+  runSearch();
+}
+const metric = (l, v, u = 'ms') => v == null ? '' : `<div class="m"><b>${v}${u}</b>${l}</div>`;
+function renderSearch(d) {
+  const hits = (d.hits || []).map((h, i) => `<div class="hit"><b>${i + 1}. ${esc(h.subject)}</b> <span class="mini">${esc(h.fileNo)} &middot; ${esc(h.directorate)}${h.score != null ? ' &middot; score ' + Number(h.score).toFixed(3) : ''}${h.attachments?.length ? ' &middot; &#128206; ' + h.attachments.map(a => esc(a.type)).join(',') : ''}</span>${h.ocr ? `<span class="mini">OCR: &ldquo;${esc(h.ocr)}&hellip;&rdquo;</span>` : ''}</div>`).join('') || '<div class="mini">no hits</div>';
+  return `<div class="metrics">${metric('DB execution (explain)', d.serverMs)}${metric('client round-trip', d.clientMs)}${metric('Voyage embedding', d.embedMs)}<div class="m"><b>${d.hits.length}</b>hits</div></div>
+    <div class="mini">Index: ${esc(d.index)}</div>
+    ${d.plan ? `<div class="mini">Plan: ${d.plan.keysExamined} keys / ${d.plan.docsExamined} docs examined for ${d.plan.returned} returned</div>` : ''}
+    <pre>${esc(d.query)}</pre>${hits}
+    ${d.explainExcerpt ? `<details><summary class="mini">explain("executionStats") excerpt</summary><pre>${esc(d.explainExcerpt)}</pre></details>` : ''}`;
+}
+async function searchCall(mode) {
+  const r = await fetch('/api/ai/search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q: aq.value, mode, directorate: aDir.value || undefined }) });
+  const d = await r.json();
+  if (d.error) throw new Error(d.error);
+  return d;
+}
+async function runSearch(btn) {
+  const out = document.getElementById('aOut');
+  if (btn) btn.disabled = true;
+  out.insertAdjacentHTML('beforeend', '');
+  try { const d = await searchCall(aMode.value); out.innerHTML = `<h4 style="margin:14px 0 0">${esc(aMode.selectedOptions[0].text)}</h4>` + renderSearch(d); }
+  catch (e) { out.innerHTML = `<pre>ERROR: ${esc(e.message)}</pre>`; }
+  if (btn) btn.disabled = false;
+}
+async function runAllModes(btn) {
+  const out = document.getElementById('aOut');
+  btn.disabled = true; out.innerHTML = '<div class="mini">running 4 methods&hellip;</div>';
+  const rows = [];
+  for (const [m, l] of [['text', '1 Keyword $text'], ['fts', '2 Full-text $search'], ['vector', '3 AI $vectorSearch'], ['hybrid', '4 Hybrid $rankFusion']]) {
+    try { rows.push({ l, d: await searchCall(m) }); } catch (e) { rows.push({ l, err: e.message }); }
+  }
+  out.innerHTML = `<table style="margin-top:12px"><tr><th>Method</th><th>DB exec</th><th>Round-trip</th><th>Hits</th><th>Top results</th></tr>` +
+    rows.map(r => r.err ? `<tr><td>${r.l}</td><td colspan="4" class="st-DOWN">${esc(r.err)}</td></tr>` :
+      `<tr><td><b>${r.l}</b></td><td>${r.d.serverMs ?? '&mdash;'} ms</td><td>${r.d.clientMs} ms</td><td>${r.d.hits.length}</td><td>${r.d.hits.slice(0, 3).map(h => esc(h.subject)).join('<br>') || '<i>none</i>'}</td></tr>`).join('') + '</table>';
+  btn.disabled = false;
+}
+async function runAsk(btn) {
+  const out = document.getElementById('rOut');
+  btn.disabled = true; out.innerHTML = '<div class="mini" style="margin-top:8px">embedding, retrieving, generating&hellip;</div>';
+  try {
+    const d = await (await fetch('/api/ai/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q: rq.value }) })).json();
+    if (d.error) throw new Error(d.error);
+    out.innerHTML = `<div class="metrics">${metric('Voyage embedding', d.embedMs)}${metric('MongoDB retrieval round-trip', d.retrievalMs)}${metric('LLM generation', d.llmMs)}</div>
+      ${d.answer ? `<div class="panel" style="background:#f6fbf7;border-color:#b7dfc2;white-space:pre-wrap">${esc(d.answer)}</div>` : `<div class="mini st-DOWN">${esc(d.llmError)}</div>`}
+      <b class="mini">Sources</b>${d.sources.map(s => `<div class="hit"><b>[${s.ref}]</b> ${esc(s.subject)} <span class="mini">${esc(s.fileNo)} &middot; ${esc(s.directorate)} &middot; similarity ${s.score}</span></div>`).join('')}
+      <details><summary class="mini">retrieval query</summary><pre>${esc(d.query)}</pre></details>`;
+  } catch (e) { out.innerHTML = `<pre>ERROR: ${esc(e.message)}</pre>`; }
+  btn.disabled = false;
+}
+
+/* ---------- audit ---------- */
+async function loadNativeAudit(btn) {
+  btn.disabled = true;
+  const out = document.getElementById('nativeAudit'), cfg = document.getElementById('auditCfg');
+  try {
+    const d = await (await fetch('/api/audit/native')).json();
+    if (d.error) throw new Error(d.error);
+    cfg.style.display = ''; cfg.textContent = `// active auditLog configuration on ${d.pod}\n` + JSON.stringify(d.auditConfig, null, 2);
+    out.innerHTML = `<table style="margin-top:12px"><tr><th>Time</th><th>Event</th><th>User</th><th>From</th><th>Result</th><th>Detail</th></tr>` +
+      d.events.map(e => `<tr><td class="mini">${esc(e.ts)}</td><td><b>${esc(e.type)}</b></td><td>${esc(e.user)}</td><td>${esc(e.remote)}</td><td class="${e.result ? 'st-DOWN' : 'st-PRIMARY'}">${e.result ? 'FAILED (' + e.result + ')' : 'ok'}</td><td class="mini">${esc(JSON.stringify(e.param || {}).slice(0, 160))}</td></tr>`).join('') + '</table>';
+  } catch (e) { out.innerHTML = `<pre>ERROR: ${esc(e.message)}</pre>`; }
+  btn.disabled = false;
+}
+async function failedLogin(btn) {
+  btn.disabled = true;
+  const d = await (await fetch('/api/audit/failed-login', { method: 'POST' })).json();
+  alert(d.message || d.error);
+  btn.disabled = false;
+}
+
+/* ---------- KMS / QE ---------- */
+const cell = v => v && v.$binary ? `<span class="cipher">&#128274; ${v.bytes} bytes ciphertext (${v.$binary})<br>${esc(v.hex)}</span>` : `<span class="plain">${esc(v)}</span>`;
+async function loadQe(btn) {
+  btn.disabled = true;
+  const out = document.getElementById('qeOut');
+  out.innerHTML = '<div class="mini" style="margin-top:8px">calling AWS KMS to unwrap data keys&hellip;</div>';
+  try {
+    const d = await (await fetch(`/api/qe/view?serviceNo=${encodeURIComponent(qeSvc.value)}&minPay=${encodeURIComponent(qePay.value)}`)).json();
+    if (d.error) throw new Error(d.error);
+    const fields = ['name', 'serviceNo', 'annualPay', 'medicalCategory', 'unit'];
+    const tbl = (rows) => `<table><tr>${fields.map(f => `<th>${f}</th>`).join('')}</tr>${rows.map(r => `<tr>${fields.map(f => `<td>${cell(r[f])}</td>`).join('')}</tr>`).join('')}</table>`;
+    out.innerHTML = `
+      <div class="mini" style="margin:10px 0">KMS: <b>${esc(d.kms.provider)}</b> &middot; region ${esc(d.kms.region)} &middot; <code>${esc(d.kms.key)}</code> &middot; ${d.keyVault.length} data keys wrapped in the key vault</div>
+      <div class="two">
+        <div><h4 style="margin:6px 0">Authorised application (keys via KMS)</h4>${tbl(d.decrypted)}</div>
+        <div><h4 style="margin:6px 0">Internal DBA / mongosh / Ops Manager (no keys)</h4>${tbl(d.raw)}</div>
+      </div>
+      <div class="two" style="margin-top:14px">
+        <div class="panel"><h2>Equality query on an encrypted field &mdash; ${d.equality.ms} ms</h2><pre>db.personnel_confidential.find(${esc(JSON.stringify(d.equality.filter))})
+// driver turns "${esc(qeSvc.value)}" into an encrypted token; server matches tokens, never plaintext</pre>${d.equality.result.length ? tbl(d.equality.result) : '<div class="mini">no match</div>'}</div>
+        <div class="panel"><h2>Range query on an encrypted field &mdash; ${d.range.ms} ms</h2><pre>db.personnel_confidential.find(${esc(JSON.stringify(d.range.filter))})</pre>${d.range.result.map(r => `<div class="hit"><b>${esc(r.name)}</b> &middot; <span class="plain">${esc(r.annualPay)}</span></div>`).join('') || '<div class="mini">no match</div>'}</div>
+      </div>
+      <div class="panel"><h2>The DBA tries the same queries on the raw data</h2>
+        <pre>db.personnel_confidential.countDocuments(${esc(JSON.stringify(d.dba.equalityOnPlainClient.filter))})  // &rarr; ${d.dba.equalityOnPlainClient.matches}
+db.personnel_confidential.countDocuments(${esc(JSON.stringify(d.dba.regexOnPlainClient.filter))})  // &rarr; ${d.dba.regexOnPlainClient.matches}</pre>
+        <div class="mini">Plaintext values do not exist anywhere in the database, so a DBA can neither read nor probe them. Encrypted fields: ${d.encryptedFields.map(f => `<code>${esc(f.path)}</code> (${typeof f.queries === 'string' ? 'hidden' : esc(f.queries.queryType)})`).join(', ')}.</div></div>`;
+  } catch (e) { out.innerHTML = `<pre>ERROR: ${esc(e.message)}</pre>`; }
+  btn.disabled = false;
+}
+
+/* ---------- architecture ---------- */
+const bx = (c, t, s) => `<div class="bx b-${c}">${t}${s ? `<small>${s}</small>` : ''}</div>`;
+const ARCH = {
+  k8s: () => `<div class="panel"><h2>Everything under one Kubernetes operator (this PoC: k3s on one EC2, namespace <code>mongodb</code>)</h2>
+    <div class="ref">MongoDB Controllers for Kubernetes (MCK) reconciles three custom resources; the same manifests run on EKS/OpenShift/on-prem Kubernetes</div>
+    <div class="arch">
+      <div class="tier"><b>Users &amp; apps</b><div class="boxes">${bx('navy', 'eOffice web / API', 'Node.js &middot; driver with retryable writes')}${bx('purple', 'Voyage AI', 'embeddings')}${bx('amber', 'LLM gateway', 'RAG answers')}${bx('red', 'AWS KMS', 'Queryable Encryption keys')}</div></div>
+      <div class="arrow">&darr; Kubernetes Services / port 27017 &darr;</div>
+      <div class="tier"><b>Kubernetes cluster &mdash; control plane: MCK operator (watches CRDs, reconciles desired state)</b><div class="boxes">
+        ${bx('blue', 'MongoDBOpsManager', 'Ops Manager 9.0 + AppDB (3-member replica set)')}
+        ${bx('green', 'MongoDB <code>eoffice-rs</code>', '3 pods (StatefulSet), each mongod + automation agent, 250 GiB PVC')}
+        ${bx('teal', 'MongoDBSearch', 'mongot pod(s): Lucene + HNSW indexes, 100 GiB PVC')}
+        ${bx('grey', 'MongoDBUser', 'SCRAM users + roles as code')}
+      </div></div>
+      <div class="arrow">&darr; agents pull config from Ops Manager; Ops Manager monitors &amp; (optionally) backs up &darr;</div>
+      <div class="tier"><b>Storage</b><div class="boxes">${bx('grey', 'PersistentVolumes', 'gp3 EBS (1 TB), per-pod')}${bx('grey', 'Backup (configured, OFF)', 'head DB + oplog / blockstore or S3')}</div></div>
+    </div>
+    <ul class="doc"><li>Operator self-heals: a deleted pod is recreated, rejoins, resyncs. Rolling upgrades one member at a time.</li>
+    <li>Declarative: users, audit config, TLS, versions and resources are fields in YAML &mdash; reviewable and repeatable (one-shot rebuild script).</li>
+    <li>For production the three pods are spread across nodes/AZs with anti-affinity (this PoC runs on a single node for cost).</li></ul></div>`,
+  vm: () => `<div class="panel"><h2>Core database on VMs, search &amp; apps on Kubernetes (or all on VMs)</h2>
+    <div class="ref">Ops Manager manages both worlds identically &mdash; it does not require Kubernetes</div>
+    <div class="arch">
+      <div class="tier"><b>Option A &middot; Core DB on VMs</b><div class="boxes">
+        ${bx('green', 'VM1 mongod', 'automation agent')}${bx('green', 'VM2 mongod', 'automation agent')}${bx('green', 'VM3 mongod', 'automation agent')}
+        ${bx('blue', 'Ops Manager (VMs or K8s)', 'agents connect to it; it deploys, upgrades, monitors, backs up')}
+      </div></div>
+      <div class="arrow">mongot connects to the replica set as an external source (MongoDBSearch with an external source host list)</div>
+      <div class="tier"><b>Search &amp; AI tier on Kubernetes</b><div class="boxes">${bx('teal', 'mongot pods', 'sync over the network from the VM replica set')}${bx('navy', 'eOffice apps', 'drivers use the replica-set connection string')}</div></div>
+      <div class="tier"><b>Option B &middot; Everything on Kubernetes (this PoC)</b><div class="boxes">${bx('green', 'MongoDB CR', 'operator-managed pods')}${bx('teal', 'MongoDBSearch CR', '')}${bx('blue', 'MongoDBOpsManager CR', '')}</div></div>
+    </div>
+    <ul class="doc"><li>The application connection string, queries, indexes, audit and Queryable Encryption are identical in both options.</li>
+    <li>Choose VMs when the platform team already operates VM fleets; choose Kubernetes for declarative operations and fast rebuilds. They can coexist and migrate member-by-member with no downtime (add new members, remove old ones).</li></ul></div>`,
+  ha: () => `<div class="panel"><h2>High availability and disaster recovery scenarios</h2>
+    <div class="arch">
+      <div class="tier"><b>1 &middot; Single data centre (this PoC): 3 members across racks / AZs</b><div class="boxes">${bx('green', 'Primary', 'writes (w:majority)')}${bx('blue', 'Secondary', 'ack + reads')}${bx('blue', 'Secondary', 'ack + reads')}</div></div>
+      <div class="tier"><b>2 &middot; Two data centres + DR (RFP 2:2:1)</b><div class="boxes">${bx('green', 'DC1', '2 members')}${bx('amber', 'DC2', '2 members')}${bx('red', 'DR site', '1 member (voting)')}</div></div>
+      <div class="tier"><b>3 &middot; Kubernetes multi-cluster</b><div class="boxes">${bx('green', 'K8s cluster A', 'members')}${bx('amber', 'K8s cluster B', 'members')}${bx('red', 'K8s cluster C / DR', 'member')}${bx('grey', 'MCK multi-cluster', 'one logical replica set')}</div></div>
+    </div>
+    <table style="margin-top:14px"><tr><th>Failure</th><th>What happens</th><th>Data loss (RPO)</th><th>Recovery (RTO)</th></tr>
+    <tr><td>Primary pod / process dies</td><td>Remaining members elect a new primary; drivers retry writes</td><td>0 with w:majority</td><td>seconds (shown live on Resilience)</td></tr>
+    <tr><td>One node / AZ lost (3 members)</td><td>2 of 3 still a majority; service continues</td><td>0</td><td>seconds</td></tr>
+    <tr><td>Whole DC lost (2:2:1)</td><td>Surviving DC + DR = 3 of 5 votes, still a majority; automatic election</td><td>0 with w:majority</td><td>seconds</td></tr>
+    <tr><td>Two DCs lost, only DR left</td><td>No majority; DR reconfigured as primary by operator action (forced reconfig)</td><td>last replicated writes (async lag)</td><td>minutes, within the 15-minute RTO</td></tr>
+    <tr><td>Logical corruption / bad delete</td><td>Point-in-time restore from Ops Manager continuous backup</td><td>to the second (oplog)</td><td>depends on size</td></tr>
+    <tr><td>Search node lost</td><td>mongot restarts and resumes from its change-stream position; core DB unaffected</td><td>none (index rebuilt/caught up)</td><td>minutes</td></tr></table>
+    <ul class="doc"><li>Write concern controls RPO: <code>w:majority</code> + journaling = acknowledged writes survive any single-site failure.</li>
+    <li>Read preference tags route reads to the nearest site; hidden / priority-0 DR members never become primary unintentionally.</li>
+    <li>Backups: continuous (oplog) + snapshots to a separate store for ransomware / site-wide events &mdash; configured in this PoC and deliberately kept <b>off</b> in Ops Manager for the demo.</li></ul></div>`,
+  om: () => `<div class="panel"><h2>Ops Manager: the operations and security control plane</h2>
+    <div class="ref">${MODE.opsManagerUrl ? `<a href="${esc(MODE.opsManagerUrl)}" target="_blank" rel="noopener">Open Ops Manager</a>` : ''}</div>
+    <div class="two">
+      <div class="doc"><b>Monitoring &amp; performance</b><ul>
+        <li>Per-node metrics: opcounters, replication lag, cache, connections, disk, CPU, page faults.</li>
+        <li><b>Query Profiler &amp; Performance Advisor</b>: slow queries and suggested indexes, with the evidence.</li>
+        <li>Real-Time panel, custom dashboards, alert rules to email / SMS / PagerDuty / webhook (e.g. lag &gt; 10 s, no primary, disk &gt; 80 %).</li>
+        <li>Data Explorer and index view per collection.</li></ul>
+        <b>Backup &amp; restore</b><ul>
+        <li>Continuous backup with point-in-time restore, scheduled snapshots, retention policies, queryable snapshots.</li>
+        <li>Targets: S3-compatible object store or filesystem blockstore. Configured in this PoC; switched off for the demo so it can be enabled live.</li></ul></div>
+      <div class="doc"><b>Security</b><ul>
+        <li><b>LDAP</b> authentication and authorisation (map AD/LDAP groups to MongoDB roles).</li>
+        <li><b>OIDC / OAuth 2.0</b> workforce SSO for users and workload identity; SAML/OIDC for the Ops Manager UI itself.</li>
+        <li>x.509 and Kerberos, TLS everywhere, custom roles (least privilege), auditing config pushed to every member.</li>
+        <li>Ops Manager activity feed records who changed what.</li></ul>
+        <b>Automation</b><ul>
+        <li>Rolling version upgrades, scaling, resizing, config changes with zero downtime.</li>
+        <li>Works for VM and Kubernetes-hosted deployments from one pane.</li>
+        <li>Full public REST API for CI/CD and compliance reporting.</li></ul></div>
+    </div></div>`,
+};
+let archTab = 'k8s';
+function showArch(t) {
+  archTab = t;
+  document.querySelectorAll('#archTabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  document.getElementById('archBody').innerHTML = ARCH[t]();
+}
+document.querySelectorAll('#archTabs button').forEach(b => b.onclick = () => showArch(b.dataset.t));
+
+/* boot */
+let primaryPod = '';
+fetch('/api/mode').then(r => r.json()).then(m => {
+  MODE = m;
+  document.getElementById('modePill').textContent =
+    m.kubernetes ? 'MCK on Kubernetes · ' + m.replicaSet : m.atlas ? 'MongoDB Atlas' : 'local replica set';
+  if (m.opsManagerUrl) {
+    const a = document.getElementById('omLink');
+    a.href = m.opsManagerUrl;
+    a.style.display = '';
+  }
+  if (m.kubernetes) {
+    document.getElementById('regionCtl').style.display = 'none';
+    document.getElementById('k8sCtl').style.display = '';
+  } else if (m.atlas) {
+    document.getElementById('regionCtl').style.display = 'none';
+    document.getElementById('atlasCtl').style.display = '';
+  }
+});
+loadDash(); refreshTopo();
+setInterval(refreshTopo, 1000);
+</script>
+</body>
+</html>

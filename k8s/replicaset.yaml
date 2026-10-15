@@ -1,0 +1,76 @@
+# MongoDB Enterprise 9.0 replica set managed by MCK (MongoDB Controllers for Kubernetes).
+# Single region, 3 nodes (node-0/1/2 on one EC2 k3s node), automated HA failover.
+# Requires Ops Manager / Cloud Manager project credentials (see k8s/om-project.yaml)
+# because Enterprise topology in MCK is driven by the MongoDB Agent.
+apiVersion: mongodb.com/v1
+kind: MongoDB
+metadata:
+  name: eoffice-rs
+  namespace: mongodb
+spec:
+  type: ReplicaSet
+  members: 3
+  version: "9.0.4-ent"
+  opsManager:
+    configMapRef:
+      name: eoffice-om-project
+  credentials: eoffice-om-credentials
+  security:
+    authentication:
+      enabled: true
+      modes: ["SCRAM"]
+  additionalMongodConfig:
+    # RFP Appx B Sec 2: Enterprise audit trail — authn, DDL, user/role changes,
+    # and CRUD on sensitive collections, as tamper-evident JSON on each node.
+    auditLog:
+      destination: file
+      format: JSON
+      path: /var/log/mongodb-mms-automation/audit.json
+      filter: >-
+        { "$or": [
+          { "atype": { "$in": ["authenticate","createUser","dropUser","createRole","dropRole",
+                               "grantRolesToUser","revokeRolesFromUser","createCollection",
+                               "dropCollection","createIndex","dropIndex","shutdown"] } },
+          { "atype": { "$in": ["insert","update","remove"] },
+            "param.ns": { "$in": ["poc.audit_log","poc.personnel_confidential"] } }
+        ] }
+    setParameter:
+      enableLocalhostAuthBypass: false
+      auditAuthorizationSuccess: true
+  statefulSet:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: mongodb-enterprise-database
+              resources:
+                requests: { cpu: "4", memory: 16Gi }
+                limits: { cpu: "8", memory: 20Gi }
+      volumeClaimTemplates:
+        - metadata:
+            name: data
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 250Gi
+---
+# MongoDB Search (mongot) — powers $search (full text) and $vectorSearch (AI/RAG)
+# on the self-managed Enterprise replica set. Deployed and wired by MCK.
+apiVersion: mongodb.com/v1
+kind: MongoDBSearch
+metadata:
+  name: eoffice-rs-search
+  namespace: mongodb
+spec:
+  source:
+    mongodbResourceRef:
+      name: eoffice-rs
+  clusters:
+    - replicas: 1
+      resourceRequirements:
+        requests: { cpu: "3", memory: 10Gi }
+        limits: { cpu: "6", memory: 12Gi }
+      persistence:
+        single:
+          storage: 100Gi

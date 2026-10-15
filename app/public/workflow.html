@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Approval Workbench | eOffice UDAAN</title>
+  <link rel="stylesheet" href="/workflow.css">
+  <script src="/workflow-ui.js" defer></script>
+  <script src="/workflow-help.js" defer></script>
+</head>
+<body>
+  <header><a href="/">eOffice <b>UDAAN</b></a><span>Approval Workbench</span><a href="/" class="back">Dashboard</a></header>
+  <main>
+    <div class="heading"><div><p class="eyebrow">OPERATIONS / FILE ROUTING</p><h1>Approval Workbench</h1></div><button id="prepare">Prepare 5,000 Files</button></div>
+    <p id="status" role="status" aria-live="polite">Connecting...</p>
+    <section class="metrics" aria-label="Workflow totals">
+      <div><span>Linked Files</span><strong id="files">0</strong></div>
+      <div><span>Approval Tasks</span><strong id="tasks">0</strong></div>
+      <div><span>Pending Approvals</span><strong id="pending">0</strong></div>
+      <div><span>Overdue Tasks</span><strong id="overdue">0</strong></div>
+      <div><span>Completed Files</span><strong id="completed">0</strong></div>
+    </section>
+    <div class="workspace">
+      <section class="queue">
+        <div class="section-title"><h2>File Queue</h2><form id="search"><input id="query" aria-label="File number" placeholder="File number" maxlength="100"><button type="submit">Search</button></form></div>
+        <div class="table-scroll"><table><thead><tr><th>File / Subject</th><th>Directorate</th><th>Assigned Officer</th><th>Stage / Due</th></tr></thead><tbody id="rows"></tbody></table></div>
+        <div class="pagination"><span id="range">0 files</span><div><button id="prev" class="secondary" aria-label="Previous page">Previous</button><button id="next" class="secondary" aria-label="Next page">Next</button></div></div>
+      </section>
+      <aside>
+        <section class="selection"><div class="section-title"><h2>Selected File</h2><span id="version" class="badge">No selection</span></div><div id="selected"></div><ol id="stages"></ol></section>
+        <section class="actions"><h2>Business Integrity</h2>
+          <div class="action-grid"><button id="constraints">Test Schema &amp; Uniqueness</button><button id="rollback" class="secondary file-action">Test Rollback</button><button id="commit" class="file-action">Approve Next Stage</button><button id="concurrency" class="secondary file-action">Race Two Approvals</button><button id="reset" class="secondary file-action">Reset Selected Workflow</button></div>
+        </section>
+      </aside>
+    </div>
+    <section class="evidence"><div class="section-title"><h2>Execution Result</h2><span id="verdict" class="badge">Not run</span></div><div id="result" aria-live="polite"><p class="muted">No execution recorded.</p></div><details><summary>Database Response</summary><pre id="raw">{}</pre></details></section>
+    <section class="report"><div class="section-title"><h2>Officer Workload</h2><span class="muted">Pending / Overdue</span></div><div id="workload"></div></section>
+    <details class="query"><summary>Join Pipeline</summary><pre id="pipeline">[]</pre></details>
+  </main>
+  <dialog id="help-dialog" aria-labelledby="help-title">
+    <div class="help-header"><h2 id="help-title"></h2><button id="help-close" class="secondary" aria-label="Close explanation" title="Close explanation">&#215;</button></div>
+    <div id="help-content"></div>
+  </dialog>
+</body>
+</html>

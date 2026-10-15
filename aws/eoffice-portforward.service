@@ -1,0 +1,15 @@
+[Unit]
+Description=eOffice replica-set port-forwards (host -> k3s pods)
+After=network-online.target k3s.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ec2-user
+Environment=KUBECONFIG=/home/ec2-user/.kube/config
+ExecStart=/bin/bash /home/ec2-user/mongodb-eoffice-poc/scripts/port-forward-run.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

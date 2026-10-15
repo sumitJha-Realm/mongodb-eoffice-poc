@@ -1,0 +1,17 @@
+[Unit]
+Description=eOffice MongoDB and Kubernetes dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/home/ec2-user/mongodb-eoffice-poc/app
+EnvironmentFile=/home/ec2-user/mongodb-eoffice-poc/.env
+Environment=KUBECONFIG=/home/ec2-user/.kube/config
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

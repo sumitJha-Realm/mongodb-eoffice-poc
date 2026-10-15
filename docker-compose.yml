@@ -1,0 +1,75 @@
+x-mongo-common: &mongo-common
+  image: mongo:7
+  restart: unless-stopped
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  volumes:
+    - ./keyfile:/keyfile-src:ro
+
+services:
+  mongo-dc1-a:
+    <<: *mongo-common
+    container_name: eoffice-dc1-a
+    command: >
+      bash -c "cp /keyfile-src/mongo-keyfile /tmp/mongo-keyfile &&
+      chmod 400 /tmp/mongo-keyfile && chown 999:999 /tmp/mongo-keyfile &&
+      exec docker-entrypoint.sh mongod --replSet rs0 --keyFile /tmp/mongo-keyfile --bind_ip_all --port 27101"
+    ports: ["27101:27101"]
+    volumes:
+      - ./keyfile:/keyfile-src:ro
+      - dc1a-data:/data/db
+
+  mongo-dc1-b:
+    <<: *mongo-common
+    container_name: eoffice-dc1-b
+    command: >
+      bash -c "cp /keyfile-src/mongo-keyfile /tmp/mongo-keyfile &&
+      chmod 400 /tmp/mongo-keyfile && chown 999:999 /tmp/mongo-keyfile &&
+      exec docker-entrypoint.sh mongod --replSet rs0 --keyFile /tmp/mongo-keyfile --bind_ip_all --port 27102"
+    ports: ["27102:27102"]
+    volumes:
+      - ./keyfile:/keyfile-src:ro
+      - dc1b-data:/data/db
+
+  mongo-dc2-a:
+    <<: *mongo-common
+    container_name: eoffice-dc2-a
+    command: >
+      bash -c "cp /keyfile-src/mongo-keyfile /tmp/mongo-keyfile &&
+      chmod 400 /tmp/mongo-keyfile && chown 999:999 /tmp/mongo-keyfile &&
+      exec docker-entrypoint.sh mongod --replSet rs0 --keyFile /tmp/mongo-keyfile --bind_ip_all --port 27201"
+    ports: ["27201:27201"]
+    volumes:
+      - ./keyfile:/keyfile-src:ro
+      - dc2a-data:/data/db
+
+  mongo-dc2-b:
+    <<: *mongo-common
+    container_name: eoffice-dc2-b
+    command: >
+      bash -c "cp /keyfile-src/mongo-keyfile /tmp/mongo-keyfile &&
+      chmod 400 /tmp/mongo-keyfile && chown 999:999 /tmp/mongo-keyfile &&
+      exec docker-entrypoint.sh mongod --replSet rs0 --keyFile /tmp/mongo-keyfile --bind_ip_all --port 27202"
+    ports: ["27202:27202"]
+    volumes:
+      - ./keyfile:/keyfile-src:ro
+      - dc2b-data:/data/db
+
+  mongo-dr-a:
+    <<: *mongo-common
+    container_name: eoffice-dr-a
+    command: >
+      bash -c "cp /keyfile-src/mongo-keyfile /tmp/mongo-keyfile &&
+      chmod 400 /tmp/mongo-keyfile && chown 999:999 /tmp/mongo-keyfile &&
+      exec docker-entrypoint.sh mongod --replSet rs0 --keyFile /tmp/mongo-keyfile --bind_ip_all --port 27301"
+    ports: ["27301:27301"]
+    volumes:
+      - ./keyfile:/keyfile-src:ro
+      - dra-data:/data/db
+
+volumes:
+  dc1a-data:
+  dc1b-data:
+  dc2a-data:
+  dc2b-data:
+  dra-data:

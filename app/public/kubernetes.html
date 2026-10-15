@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#172c27" />
+<title>Kubernetes map | eOffice</title>
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #172c27;
+    --muted: #68756e;
+    --paper: #f2f4ef;
+    --surface: #fff;
+    --line: #d8ded7;
+    --green: #1e694d;
+    --lime: #d4ee65;
+    --blue: #3f6e86;
+    --amber: #bc682d;
+    --red: #a43f37;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.45 "Avenir Next", Avenir, "Segoe UI", sans-serif; }
+  a { color: inherit; }
+  button, input, select { font: inherit; }
+  .topbar { height: 58px; display: flex; align-items: center; gap: 14px; padding: 0 28px; background: var(--ink); color: white; }
+  .brand-mark { display: grid; place-items: center; width: 32px; height: 32px; background: var(--lime); color: var(--ink); font: 800 12px var(--mono); }
+  .brand { font-weight: 700; letter-spacing: .02em; }
+  .brand small { display: block; color: #b6c6bd; font-size: 10px; font-weight: 500; }
+  .top-spacer { flex: 1; }
+  .manifest-tag { color: #e1e8e2; font: 11px var(--mono); }
+  .back-link { padding: 7px 10px; border: 1px solid #52635b; text-decoration: none; font-size: 12px; }
+  .back-link:hover { border-color: var(--lime); color: var(--lime); }
+  main { width: min(1420px, 100%); margin: auto; padding: 28px; }
+  .eyebrow { margin: 0 0 5px; color: var(--green); font: 700 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+  .page-head { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 20px; }
+  h1, h2, h3, p { margin-top: 0; }
+  h1 { margin-bottom: 4px; font: 500 30px/1.1 Georgia, "Times New Roman", serif; }
+  .subtitle { margin: 0; color: var(--muted); }
+  .snapshot { display: flex; align-items: center; gap: 8px; border: 1px solid #ddc69c; background: #fff9ed; color: #78521c; padding: 8px 11px; font-size: 11px; white-space: nowrap; }
+  .snapshot b { font: 700 10px var(--mono); text-transform: uppercase; }
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); margin-bottom: 20px; border: 1px solid var(--line); background: var(--surface); }
+  .metric { min-height: 75px; padding: 13px 16px; border-right: 1px solid var(--line); }
+  .metric:last-child { border: 0; }
+  .metric strong { display: block; font: 500 23px Georgia, serif; }
+  .metric span { color: var(--muted); font-size: 11px; }
+  .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 12px; }
+  .section-head h2 { margin: 0; font: 500 20px Georgia, serif; }
+  .section-head .meta { color: var(--muted); font: 10px var(--mono); }
+  .site { padding: 16px; border: 1px solid #9ba99f; background-color: #e7ebe4; background-image: repeating-linear-gradient(0deg, transparent, transparent 23px, rgba(36,70,53,.035) 24px), repeating-linear-gradient(90deg, transparent, transparent 23px, rgba(36,70,53,.035) 24px); }
+  .site-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 0 2px 12px; }
+  .site-title { font-weight: 700; }
+  .site-title small { display: block; color: var(--muted); font: 10px var(--mono); }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { border: 1px solid var(--line); background: var(--surface); padding: 3px 7px; color: #47574e; font: 10px var(--mono); }
+  .cluster { display: grid; grid-template-columns: 210px minmax(0, 1fr); min-height: 350px; border: 2px solid var(--green); background: rgba(255,255,255,.55); }
+  .node-rail { padding: 14px; border-right: 1px dashed #a9b5ab; background: rgba(255,255,255,.52); }
+  .rail-label { margin-bottom: 11px; color: var(--green); font: 700 10px var(--mono); text-transform: uppercase; }
+  .node-box, .resource, .workload, .pod, .storage-item { border: 1px solid var(--line); background: var(--surface); }
+  .node-box { padding: 12px; }
+  .node-box strong { display: block; margin-bottom: 3px; }
+  .node-box small { color: var(--muted); font-size: 10px; }
+  .node-state { display: flex; align-items: center; gap: 6px; margin-top: 12px; color: var(--green); font: 10px var(--mono); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #58a878; }
+  .operator { margin-top: 12px; padding: 10px; border-left: 3px solid var(--blue); background: #edf4f6; }
+  .operator strong { display: block; font-size: 11px; }
+  .operator small { color: var(--muted); font-size: 10px; }
+  .namespace { min-width: 0; padding: 14px; }
+  .namespace-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+  .namespace-head strong { font: 700 12px var(--mono); }
+  .namespace-head span { color: var(--muted); font: 10px var(--mono); }
+  .workloads { display: grid; grid-template-columns: minmax(255px, 1.05fr) minmax(300px, 1.25fr); gap: 12px; padding-top: 12px; }
+  .workload { min-width: 0; padding: 12px; border-top: 3px solid var(--green); }
+  .workload.ops { border-top-color: var(--amber); }
+  .workload.search { border-top-color: var(--blue); }
+  .workload-head { display: flex; justify-content: space-between; gap: 8px; align-items: start; }
+  .workload h3 { margin: 0 0 3px; font-size: 13px; }
+  .workload .kind { color: var(--muted); font: 10px var(--mono); }
+  .version { color: var(--green); font: 10px var(--mono); white-space: nowrap; }
+  .service-line { margin: 10px 0; padding: 6px 8px; background: #f0f3ef; color: #43554a; font: 10px var(--mono); }
+  .pods { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+  .pod { min-width: 0; padding: 7px 6px; text-align: center; }
+  .pod strong { display: block; overflow: hidden; font: 10px var(--mono); text-overflow: ellipsis; }
+  .pod span { color: var(--muted); font-size: 9px; }
+  .sub-block { margin-top: 10px; padding: 9px; border: 1px dashed #c8d0c7; background: #fbfcfa; }
+  .sub-block > strong { font-size: 10px; }
+  .sub-block .pods { margin-top: 7px; }
+  .sub-block .pod { padding: 5px 3px; }
+  .search-core { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 6px; margin: 14px 0 8px; }
+  .arrow { color: var(--blue); font: 15px var(--mono); text-align: center; }
+  .single-pod { padding: 10px 7px; border: 1px solid var(--line); background: #f5f8f9; text-align: center; }
+  .single-pod strong { display: block; font: 10px var(--mono); }
+  .single-pod span { color: var(--muted); font-size: 9px; }
+  .storage-rail { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 8px; border-top: 1px solid var(--line); }
+  .storage-icon { color: var(--amber); font: 700 10px var(--mono); }
+  .storage-rail span:last-child { color: var(--muted); font-size: 10px; }
+  .connections { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; margin: 12px 0 25px; background: var(--line); border: 1px solid var(--line); }
+  .connection { min-height: 55px; padding: 9px 10px; background: white; }
+  .connection b { display: block; margin-bottom: 3px; color: var(--green); font: 10px var(--mono); }
+  .connection span { color: #536159; font-size: 10px; }
+  .live-section { margin: 0 0 25px; }
+  .live-state { display: flex; align-items: center; gap: 7px; color: var(--green); font: 10px var(--mono); }
+  .live-state.warn { color: var(--amber); }
+  .live-state.bad { color: var(--red); }
+  .live-state .dot { flex: 0 0 auto; }
+  .refresh-button { border: 1px solid var(--line); background: white; color: var(--ink); padding: 6px 9px; cursor: pointer; font-size: 10px; }
+  .live-head-actions { display: flex; align-items: center; gap: 12px; }
+  .node-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(205px, 1fr)); gap: 10px; margin-bottom: 10px; }
+  .node-metric { border: 1px solid var(--line); background: white; padding: 12px; }
+  .node-metric h3 { margin: 0 0 2px; font: 700 11px var(--mono); overflow-wrap: anywhere; }
+  .node-metric small { color: var(--muted); font-size: 10px; }
+  .usage-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 11px; }
+  .usage-pair span { display: block; color: var(--muted); font: 9px var(--mono); }
+  .usage-pair strong { display: block; margin-top: 2px; font: 500 18px Georgia, serif; }
+  .pod-panel { border: 1px solid var(--line); background: white; overflow-x: auto; }
+  .pod-panel table { min-width: 640px; }
+  .phase { font: 10px var(--mono); }
+  .phase.ok { color: var(--green); }
+  .phase.warn { color: var(--amber); }
+  .phase.bad { color: var(--red); }
+  .pod-name { font-family: var(--mono); font-size: 10px; }
+  .metrics-note { margin: 8px 0 0; color: var(--muted); font-size: 10px; }
+  .inventory-layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(245px, .8fr); gap: 16px; align-items: start; }
+  .inventory { border: 1px solid var(--line); background: white; }
+  .inventory-tools { display: flex; gap: 8px; padding: 10px; border-bottom: 1px solid var(--line); }
+  input, select { min-width: 0; border: 1px solid var(--line); border-radius: 0; background: white; color: var(--ink); padding: 7px 9px; font-size: 11px; }
+  input { flex: 1; }
+  table { width: 100%; border-collapse: collapse; text-align: left; font-size: 11px; }
+  th { color: var(--muted); font: 10px var(--mono); }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e8ece7; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover, tbody tr.selected { background: #f0f5ef; }
+  td:first-child { font-family: var(--mono); font-size: 10px; }
+  .kind-label { color: var(--blue); }
+  .inspect { position: sticky; top: 16px; min-height: 220px; border: 1px solid var(--line); background: var(--ink); color: white; padding: 15px; }
+  .inspect .eyebrow { color: var(--lime); }
+  .inspect h3 { margin-bottom: 12px; font: 500 18px Georgia, serif; overflow-wrap: anywhere; }
+  .inspect dl { display: grid; grid-template-columns: 80px 1fr; gap: 7px 9px; margin: 0; font-size: 10px; }
+  .inspect dt { color: #aebcb3; }
+  .inspect dd { margin: 0; font-family: var(--mono); overflow-wrap: anywhere; }
+  .footnote { margin: 11px 0 0; color: #c6d0c9; font-size: 10px; }
+  @media (max-width: 900px) {
+    main { padding: 20px 16px; }
+    .cluster { grid-template-columns: 170px minmax(0,1fr); }
+    .workloads { grid-template-columns: 1fr; }
+    .connections { grid-template-columns: repeat(2,1fr); }
+  }
+  @media (max-width: 620px) {
+    .topbar { padding: 0 14px; }
+    .manifest-tag { display: none; }
+    .page-head { align-items: start; flex-direction: column; }
+    .snapshot { white-space: normal; }
+    h1 { font-size: 27px; }
+    .metrics { grid-template-columns: repeat(2,1fr); }
+    .metric:nth-child(2) { border-right: 0; }
+    .metric:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+    .site { padding: 9px; }
+    .site-top { align-items: start; flex-direction: column; }
+    .cluster { grid-template-columns: 1fr; }
+    .node-rail { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-right: 0; border-bottom: 1px dashed #a9b5ab; }
+    .rail-label { grid-column: 1 / -1; margin: 0; }
+    .operator { margin: 0; }
+    .namespace { padding: 10px; }
+    .workloads { grid-template-columns: minmax(0,1fr); }
+    .connections { grid-template-columns: 1fr 1fr; }
+    .inventory-layout { grid-template-columns: 1fr; }
+    .inspect { position: static; }
+    .inventory { overflow-x: auto; }
+    table { min-width: 490px; }
+  }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand-mark">K8S</div>
+  <div class="brand">eOffice platform<small>infrastructure view</small></div>
+  <div class="top-spacer"></div>
+  <span class="manifest-tag">LIVE METRICS / EC2 · mongodb</span>
+  <a class="back-link" href="/eoffice/">Back to eOffice</a>
+</header>
+<main>
+  <div class="page-head">
+    <div><p class="eyebrow">Kubernetes / topology</p><h1>Cluster map</h1><p class="subtitle">MongoDB Controllers for Kubernetes · namespace mongodb</p></div>
+    <div class="snapshot"><b>Live metrics</b><span>Usage and pod state polled from Kubernetes on EC2</span></div>
+  </div>
+
+  <section class="metrics" aria-label="Deployment summary">
+    <div class="metric"><strong>1</strong><span>k3s node in the declared footprint</span></div>
+    <div class="metric"><strong>1</strong><span>MongoDB namespace</span></div>
+    <div class="metric"><strong>3</strong><span>replica set members</span></div>
+    <div class="metric"><strong>9.0</strong><span>MongoDB Enterprise target</span></div>
+  </section>
+
+  <div class="section-head"><h2>Site footprint</h2><span class="meta">AWS / SINGLE EC2 HOST / K3S</span></div>
+  <section class="site" aria-label="Kubernetes deployment topology">
+    <div class="site-top">
+      <div class="site-title">AWS EC2 · k3s cluster<small>Single host design from the deployment manifests</small></div>
+      <div class="tag-row"><span class="tag">m6i.8xlarge target</span><span class="tag">32 vCPU · 128 GiB</span><span class="tag">gp3 · 1 TiB host disk</span></div>
+    </div>
+    <div class="cluster">
+      <aside class="node-rail">
+        <div class="rail-label">Cluster / node</div>
+        <div class="node-box"><strong>k3s-node-1</strong><small>EC2 worker + control plane</small><div class="node-state"><i class="dot"></i> declared footprint</div></div>
+        <div class="operator"><strong>MCK operator</strong><small>Watches namespace mongodb<br />Reconciles MongoDB CRs</small></div>
+      </aside>
+      <div class="namespace">
+        <div class="namespace-head"><strong>namespace / mongodb</strong><span>operator-managed workloads</span></div>
+        <div class="workloads">
+          <article class="workload ops">
+            <div class="workload-head"><div><h3>ops-manager</h3><div class="kind">MongoDBOpsManager · 1 replica</div></div><span class="version">v9.0.1</span></div>
+            <div class="service-line">NodePort :30080 → Ops Manager UI</div>
+            <div class="sub-block"><strong>Application Database · 3 members</strong><div class="pods"><div class="pod"><strong>AppDB-0</strong><span>member</span></div><div class="pod"><strong>AppDB-1</strong><span>member</span></div><div class="pod"><strong>AppDB-2</strong><span>member</span></div></div></div>
+            <div class="sub-block"><strong>Backup · enabled</strong><div class="tag-row" style="margin-top:7px"><span class="tag">HeadDB · 20 GiB</span><span class="tag">blockstore</span><span class="tag">oplog store</span></div></div>
+          </article>
+          <article class="workload">
+            <div class="workload-head"><div><h3>eoffice-rs</h3><div class="kind">MongoDB · ReplicaSet</div></div><span class="version">v9.0.4-ent</span></div>
+            <div class="service-line">SCRAM authentication · StatefulSet · 3 members</div>
+            <div class="pods"><div class="pod"><strong>eoffice-rs-0</strong><span>250 GiB PVC</span></div><div class="pod"><strong>eoffice-rs-1</strong><span>250 GiB PVC</span></div><div class="pod"><strong>eoffice-rs-2</strong><span>250 GiB PVC</span></div></div>
+            <div class="storage-rail"><span class="storage-icon">PVC</span><span>3 × data volumes · ReadWriteOnce</span></div>
+          </article>
+          <article class="workload search">
+            <div class="workload-head"><div><h3>eoffice-rs-search</h3><div class="kind">MongoDBSearch · 1 replica</div></div><span class="version">Search</span></div>
+            <div class="search-core"><div class="single-pod"><strong>eoffice-rs</strong><span>source replica set</span></div><span class="arrow">→</span><div class="single-pod"><strong>mongot</strong><span>100 GiB persistence</span></div></div>
+            <div class="storage-rail"><span class="storage-icon">PVC</span><span>Search index persistence · 100 GiB</span></div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="live-section" aria-labelledby="live-title">
+    <div class="section-head">
+      <h2 id="live-title">Live cluster metrics</h2>
+      <div class="live-head-actions"><span id="metrics-status" class="live-state warn"><i class="dot"></i>Connecting to EC2</span><button class="refresh-button" id="refresh-metrics" type="button" title="Refresh Kubernetes metrics">Refresh</button></div>
+    </div>
+    <div class="node-metrics" id="node-metrics"><div class="node-metric"><h3>Waiting for node metrics</h3><small>Kubernetes Metrics API</small></div></div>
+    <div class="pod-panel">
+      <table><thead><tr><th>Pod</th><th>Phase / ready</th><th>CPU</th><th>Memory</th><th>Restarts</th><th>Node</th></tr></thead><tbody id="live-pods"><tr><td colspan="6">Loading namespace mongodb...</td></tr></tbody></table>
+    </div>
+    <p class="metrics-note" id="metrics-note">Metrics are queried from the Kubernetes Metrics API on the EC2 host.</p>
+  </section>
+
+  <div class="connections" aria-label="Resource relationships">
+    <div class="connection"><b>01 / MCK</b><span>Operator reconciles Ops Manager, MongoDB, Search, and user resources.</span></div>
+    <div class="connection"><b>02 / CONTROL</b><span>Ops Manager automation configures eoffice-rs through the project credentials.</span></div>
+    <div class="connection"><b>03 / SEARCH</b><span>MongoDBSearch uses eoffice-rs as its source cluster.</span></div>
+    <div class="connection"><b>04 / BACKUP</b><span>Blockstore and oplog store user references target eoffice-rs.</span></div>
+  </div>
+
+  <section aria-labelledby="inventory-title">
+    <div class="section-head"><h2 id="inventory-title">Resource inventory</h2><span class="meta" id="resource-count">0 RESOURCES</span></div>
+    <div class="inventory-layout">
+      <div class="inventory">
+        <div class="inventory-tools"><input id="resource-search" type="search" placeholder="Filter by name or kind" aria-label="Filter resources" /><select id="kind-filter" aria-label="Filter by kind"><option value="">All kinds</option></select></div>
+        <table><thead><tr><th>Name</th><th>Kind</th><th>Configured purpose</th></tr></thead><tbody id="resource-rows"></tbody></table>
+      </div>
+      <aside class="inspect" id="inspector" aria-live="polite"></aside>
+    </div>
+  </section>
+</main>
+<script>
+const resources = [
+  { name: "mongodb-kubernetes-operator", kind: "Deployment", purpose: "Watches namespace mongodb and reconciles MongoDB custom resources.", namespace: "mongodb", source: "scripts/k8s-deploy.sh" },
+  { name: "ops-manager", kind: "MongoDBOpsManager", purpose: "Ops Manager 9.0.1 with a three-member Application Database and backup enabled.", namespace: "mongodb", source: "k8s/ops-manager.yaml" },
+  { name: "ops-manager-svc", kind: "Service / NodePort", purpose: "External UI entry point on node port 30080.", namespace: "mongodb", source: "k8s/ops-manager.yaml" },
+  { name: "eoffice-rs", kind: "MongoDB / ReplicaSet", purpose: "Three MongoDB Enterprise 9.0.4 members with SCRAM authentication and audit logging.", namespace: "mongodb", source: "k8s/replicaset.yaml" },
+  { name: "eoffice-rs-0..2", kind: "StatefulSet pods", purpose: "Three replica set pods; each requests a 250 GiB ReadWriteOnce data volume.", namespace: "mongodb", source: "k8s/replicaset.yaml" },
+  { name: "eoffice-rs-search", kind: "MongoDBSearch", purpose: "One Search service replica connected to eoffice-rs, with 100 GiB persistence.", namespace: "mongodb", source: "k8s/replicaset.yaml" },
+  { name: "eoffice-om-project", kind: "ConfigMap", purpose: "Ops Manager base URL, organization ID, and project name. The checked-in org ID is a placeholder.", namespace: "mongodb", source: "k8s/om-project.yaml" },
+  { name: "eoffice-om-credentials", kind: "Secret", purpose: "Ops Manager API credentials referenced by the MongoDB resource. Values are not shown.", namespace: "mongodb", source: "k8s/om-project.yaml" },
+  { name: "om-admin-secret", kind: "Secret", purpose: "Ops Manager initial administrator credentials. Values are not shown.", namespace: "mongodb", source: "k8s/ops-manager.yaml" },
+  { name: "eoffice-admin-password", kind: "Secret", purpose: "Password source for the eoffice-admin MongoDBUser. Value is not shown.", namespace: "mongodb", source: "k8s/users.yaml" },
+  { name: "eoffice-admin", kind: "MongoDBUser", purpose: "SCRAM admin user with the root role on eoffice-rs.", namespace: "mongodb", source: "k8s/users.yaml" },
+  { name: "eoffice-backup-store-password", kind: "Secret", purpose: "Password source used by the backup store MongoDBUser resources. Value is not shown.", namespace: "mongodb", source: "k8s/users.yaml" },
+  { name: "eoffice-backup-blockstore-user", kind: "MongoDBUser", purpose: "Backup blockstore account referenced by Ops Manager backup configuration.", namespace: "mongodb", source: "k8s/users.yaml" },
+  { name: "eoffice-backup-oplog-user", kind: "MongoDBUser", purpose: "Backup oplog account referenced by Ops Manager backup configuration.", namespace: "mongodb", source: "k8s/users.yaml" },
+  { name: "eoffice-rs data", kind: "PersistentVolumeClaim", purpose: "Three per-pod data claims, each 250 GiB; provisioned from the StatefulSet template.", namespace: "mongodb", source: "k8s/replicaset.yaml" },
+  { name: "Search persistence", kind: "PersistentVolumeClaim", purpose: "Single 100 GiB persistent volume for MongoDB Search indexes.", namespace: "mongodb", source: "k8s/replicaset.yaml" }
+];
+
+const rows = document.getElementById("resource-rows");
+const search = document.getElementById("resource-search");
+const kindFilter = document.getElementById("kind-filter");
+const inspector = document.getElementById("inspector");
+const kinds = [...new Set(resources.map(resource => resource.kind))].sort();
+
+kindFilter.insertAdjacentHTML("beforeend", kinds.map(kind => `<option value="${kind}">${kind}</option>`).join(""));
+
+function showDetails(resource) {
+  inspector.innerHTML = `<p class="eyebrow">Selected resource</p><h3>${resource.name}</h3><dl><dt>Kind</dt><dd>${resource.kind}</dd><dt>Namespace</dt><dd>${resource.namespace}</dd><dt>Source</dt><dd>${resource.source}</dd></dl><p class="footnote">${resource.purpose}</p>`;
+}
+
+function renderResources() {
+  const query = search.value.trim().toLowerCase();
+  const selectedKind = kindFilter.value;
+  const visible = resources.filter(resource =>
+    (!selectedKind || resource.kind === selectedKind) &&
+    (!query || `${resource.name} ${resource.kind} ${resource.purpose}`.toLowerCase().includes(query))
+  );
+  document.getElementById("resource-count").textContent = `${visible.length} / ${resources.length} RESOURCES`;
+  rows.innerHTML = visible.map((resource, index) => `<tr data-index="${resources.indexOf(resource)}" class="${index === 0 ? "selected" : ""}"><td>${resource.name}</td><td class="kind-label">${resource.kind}</td><td>${resource.purpose}</td></tr>`).join("");
+  if (visible.length) showDetails(visible[0]);
+  else inspector.innerHTML = '<p class="eyebrow">Resource details</p><h3>No matching resource</h3><p class="footnote">Change the filter to see resources.</p>';
+}
+
+const escapeHtml = value => String(value ?? "—").replace(/[&<>"']/g, character => ({
+  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+}[character]));
+
+function phaseClass(pod) {
+  if (pod.phase !== "Running") return "bad";
+  return pod.ready ? "ok" : "warn";
+}
+
+async function refreshMetrics() {
+  const status = document.getElementById("metrics-status");
+  const nodeContainer = document.getElementById("node-metrics");
+  const podContainer = document.getElementById("live-pods");
+  const note = document.getElementById("metrics-note");
+  try {
+    const response = await fetch("/api/kubernetes/metrics", { cache: "no-store" });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+    const updated = new Date(data.timestamp).toLocaleTimeString();
+    status.className = `live-state ${data.metricsAvailable ? "" : "warn"}`;
+    status.innerHTML = `<i class="dot"></i>${data.metricsAvailable ? `Live · updated ${escapeHtml(updated)}` : "Pod state live · usage metrics unavailable"}`;
+    nodeContainer.innerHTML = data.nodes.length ? data.nodes.map(node => `
+      <article class="node-metric"><h3>${escapeHtml(node.name)}</h3><small>${node.ready ? "Ready" : "NotReady"} · capacity ${escapeHtml(node.capacity?.cpu)} CPU / ${escapeHtml(node.capacity?.memory)} memory</small>
+      <div class="usage-pair"><div><span>CPU / UTILIZATION</span><strong>${escapeHtml(node.metrics?.cpu)} <small>${escapeHtml(node.metrics?.cpuPercent)}</small></strong></div><div><span>MEMORY / UTILIZATION</span><strong>${escapeHtml(node.metrics?.memory)} <small>${escapeHtml(node.metrics?.memoryPercent)}</small></strong></div></div></article>`).join("") : '<div class="node-metric"><h3>No Kubernetes nodes returned</h3></div>';
+    podContainer.innerHTML = data.pods.length ? data.pods.map(pod => `
+      <tr><td class="pod-name">${escapeHtml(pod.name)}</td><td><span class="phase ${phaseClass(pod)}">${escapeHtml(pod.phase)} · ${pod.ready ? "Ready" : "Not ready"}</span></td><td>${escapeHtml(pod.metrics?.cpu)}</td><td>${escapeHtml(pod.metrics?.memory)}</td><td>${escapeHtml(pod.restarts)}</td><td>${escapeHtml(pod.node)}</td></tr>`).join("") : '<tr><td colspan="6">No pods in namespace mongodb.</td></tr>';
+    note.textContent = data.metricsError || `Namespace ${data.namespace} · ${data.pods.length} pods · refreshed every 15 seconds.`;
+    note.title = data.metricsError || "";
+  } catch (error) {
+    status.className = "live-state bad";
+    status.textContent = "Kubernetes metrics unavailable";
+    note.textContent = error.message;
+  }
+}
+
+rows.addEventListener("click", event => {
+  const row = event.target.closest("tr[data-index]");
+  if (!row) return;
+  rows.querySelectorAll("tr").forEach(item => item.classList.remove("selected"));
+  row.classList.add("selected");
+  showDetails(resources[Number(row.dataset.index)]);
+});
+search.addEventListener("input", renderResources);
+kindFilter.addEventListener("change", renderResources);
+document.getElementById("refresh-metrics").addEventListener("click", refreshMetrics);
+renderResources();
+refreshMetrics();
+setInterval(refreshMetrics, 15000);
+</script>
+</body>
+</html>

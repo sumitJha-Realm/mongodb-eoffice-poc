@@ -1,0 +1,72 @@
+# Ops Manager 9.0 on the same k3s cluster (metrics, monitoring UI, automation, audit views).
+# Sized for a single m6i.8xlarge EC2 (32 vCPU / 128 GB, 1 TB gp3 @ 10000 IOPS)
+# so OM + AppDB + 3x mongod 9.0-ent + mongot all run without contention (P99 < 10 ms target).
+apiVersion: v1
+kind: Secret
+metadata:
+  name: om-admin-secret
+  namespace: mongodb
+type: Opaque
+stringData:
+  Username: "admin@eoffice.poc"
+  Password: "Eoffice-123!"
+  FirstName: "Eoffice"
+  LastName: "Admin"
+---
+apiVersion: mongodb.com/v1
+kind: MongoDBOpsManager
+metadata:
+  name: ops-manager
+  namespace: mongodb
+spec:
+  replicas: 1
+  version: "9.0.1"
+  adminCredentials: om-admin-secret
+  configuration:
+    mms.ignoreInitialUiSetup: "true"
+    automation.versions.source: remote
+    mms.fromEmailAddr: "noreply@eoffice.poc"
+    mms.replyToEmailAddr: "noreply@eoffice.poc"
+    mms.adminEmailAddr: "admin@eoffice.poc"
+    mms.mail.transport: smtp
+    mms.mail.hostname: "localhost"
+    mms.mail.port: "25"
+  externalConnectivity:
+    type: NodePort
+    port: 30080
+  statefulSet:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: mongodb-ops-manager
+              resources:
+                requests: { cpu: "3", memory: 10Gi }
+                limits: { cpu: "6", memory: 12Gi }
+  applicationDatabase:
+    members: 3
+    version: "8.0.12-ent"
+    podSpec:
+      podTemplate:
+        spec:
+          containers:
+            - name: mongodb-agent
+              resources:
+                requests: { cpu: 500m, memory: 1Gi }
+  backup:
+    enabled: true
+    members: 1
+    headDB:
+      storage: 20Gi
+    blockStores:
+      - name: eoffice-blockstore
+        mongodbResourceRef:
+          name: eoffice-rs
+        mongodbUserRef:
+          name: eoffice-backup-blockstore-user
+    opLogStores:
+      - name: eoffice-oplog-store
+        mongodbResourceRef:
+          name: eoffice-rs
+        mongodbUserRef:
+          name: eoffice-backup-oplog-user

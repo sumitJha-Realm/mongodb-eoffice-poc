@@ -1,0 +1,10 @@
+node_modules/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+aws/instance.env
+.DS_Store
+keyfile/mongo-keyfile
+*.log
